@@ -6,9 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+
 
 class User extends Authenticatable
 {
+    use HasRoles;
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -21,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'credits',
     ];
 
     /**
@@ -43,6 +48,47 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'credits' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Get the orders for the user.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Check if the user has enough credits for a purchase
+     */
+    public function hasEnoughCredits(float $amount): bool
+    {
+        return $this->credits >= $amount;
+    }
+
+    /**
+     * Deduct credits from user account
+     */
+    public function deductCredits(float $amount): bool
+    {
+        if (!$this->hasEnoughCredits($amount)) {
+            return false;
+        }
+
+        $this->credits -= $amount;
+        $this->save();
+
+        return true;
+    }
+
+    /**
+     * Add credits to user account
+     */
+    public function addCredits(float $amount): void
+    {
+        $this->credits += $amount;
+        $this->save();
     }
 }
