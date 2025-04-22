@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\VerificationEmail;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str; // Add this import for Str class
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -258,9 +259,10 @@ class UsersController extends Controller {
                 $newUser = new User();
                 $newUser->name = $googleUser->name;
                 $newUser->email = $googleUser->email;
-                $newUser->password = Hash::make(str_random(16)); // Random password
+                $newUser->password = Hash::make(Str::random(16)); // Using Str::random() instead of str_random()
                 $newUser->google_id = $googleUser->id;
                 $newUser->email_verified_at = now(); // Consider them verified since Google verified
+                $newUser->credits = 1000; // Give new customers some starting credits
                 $newUser->save();
                 
                 // Assign Customer role
