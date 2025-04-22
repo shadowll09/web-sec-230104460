@@ -1,103 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplication Table</title>
-    <link rel="stylesheet" href="{{ asset('bootstrap-5.3.3-dist/css/bootstrap.min.css') }}">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            color: #2c3e50;
-        }
+@extends('layouts.master')
+@section('title', 'Welcome to Our Store')
+@section('content')
+    <div class="container py-5">
+        <!-- Hero Section -->
+        <div class="row mb-5">
+            <div class="col-md-12 text-center">
+                <h1 class="display-4 fw-bold">Welcome to Our Online Store</h1>
+                <p class="lead text-muted">Your one-stop shop for quality products</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                    <a href="{{ route('products_list') }}" class="btn btn-primary btn-lg px-4 gap-3">Browse Products</a>
+                    @guest
+                    <a href="{{ route('register') }}" class="btn btn-outline-secondary btn-lg px-4">Sign Up</a>
+                    @endguest
+                </div>
+            </div>
+        </div>
 
-        .card {
-            border: none;
-            border-radius: 0.5rem;
-            margin-bottom: 20px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+        <!-- User Roles Section -->
+        <div class="row mb-5">
+            <div class="col-md-12 text-center mb-4">
+                <h2 class="fw-bold">Our Platform Users</h2>
+                <hr class="w-25 mx-auto">
+            </div>
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #ff7e5f, #feb47b);
-            color: white;
-            padding: 1rem;
-            font-size: 1.2rem;
-            font-weight: 600;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-            text-align: center;
-        }
-
-        .table {
-            margin-bottom: 0;
-            font-size: 1rem;
-        }
-
-        .table-bordered td {
-            border: 1px solid #e9ecef;
-            padding: 0.75rem;
-        }
-
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: #fdf6ec;
-        }
-
-        .table td {
-            text-align: center;
-            font-weight: 500;
-            color: #4a5568;
-        }
-
-        h1 {
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            text-align: center;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 768px) {
-            .card {
-                margin-bottom: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Multiplication Table (1 to 20)</h1>
-        <div class="row">
-            @for ($tableNumber = 1; $tableNumber <= 20; $tableNumber++)
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            Table of {{ $tableNumber }}
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-bordered table-striped">
-                                <tbody>
-                                    @for ($i = 1; $i <= 20; $i++)
-                                        <tr>
-                                            <td>{{ $i }} * {{ $tableNumber }} = {{ $i * $tableNumber }}</td>
-                                        </tr>
-                                    @endfor
-                                </tbody>
-                            </table>
-                        </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-circle fs-1 text-primary mb-3"></i>
+                        <h3 class="card-title">Customers</h3>
+                        <p class="card-text">Browse and purchase products with ease. Create an account to track your orders.</p>
+                        @guest
+                        <a href="{{ route('register') }}" class="btn btn-sm btn-outline-primary">Register Now</a>
+                        @endguest
                     </div>
                 </div>
-            @endfor
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shop fs-1 text-success mb-3"></i>
+                        <h3 class="card-title">Employees</h3>
+                        <p class="card-text">Manage products, view customer lists, and help maintain our inventory.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-lock fs-1 text-danger mb-3"></i>
+                        <h3 class="card-title">Administrators</h3>
+                        <p class="card-text">Manage the entire system, including adding new employees and overseeing operations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Products -->
+        <div class="row mb-5">
+            <div class="col-md-12 text-center mb-4">
+                <h2 class="fw-bold">Featured Products</h2>
+                <hr class="w-25 mx-auto">
+                <p>Check out some of our popular items</p>
+                <a href="{{ route('products_list') }}" class="btn btn-primary">View All Products</a>
+            </div>
         </div>
     </div>
-
-    <script src="{{ asset('bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js') }}"></script>
-</body>
-</html>
+@endsection

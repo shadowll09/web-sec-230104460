@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +13,40 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Create admin user
+        $admin = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
         ]);
+        $admin->assignRole('Admin');
+
+        // Create employee user
+        $employee = User::create([
+            'name' => 'Employee User',
+            'email' => 'employee@example.com',
+            'password' => Hash::make('password'),
+        ]);
+        $employee->assignRole('Employee');
+
+        // Create customer users
+        $customer1 = User::create([
+            'name' => 'Customer One',
+            'email' => 'customer1@example.com',
+            'password' => Hash::make('password'),
+            'credits' => 5000,
+        ]);
+        $customer1->assignRole('Customer');
+
+        $customer2 = User::create([
+            'name' => 'Customer Two',
+            'email' => 'customer2@example.com',
+            'password' => Hash::make('password'),
+            'credits' => 8000,
+        ]);
+        $customer2->assignRole('Customer');
+
+        // Seed products
+        $this->call(ProductSeeder::class);
     }
 }
