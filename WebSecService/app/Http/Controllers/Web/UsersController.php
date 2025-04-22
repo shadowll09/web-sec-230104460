@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use DB;
+use Illuminate\Support\Facades\DB as DBFacade; // Fix DB import with an alias to prevent naming conflict
 use Artisan;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
@@ -16,6 +16,8 @@ use App\Mail\VerificationEmail;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str; // Add this import for Str class
+use Illuminate\Support\Facades\Schema; // Add missing import for Schema
+use Illuminate\Support\Facades\Log; // Add missing import for Log
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -256,28 +258,42 @@ class UsersController extends Controller {
                 Auth::login($existingUser);
             } else {
                 // User doesn't exist, create new user
-                $newUser = new User();
-                $newUser->name = $googleUser->name;
-                $newUser->email = $googleUser->email;
-                $newUser->password = Hash::make(Str::random(16)); // Using Str::random() instead of str_random()
-                $newUser->google_id = $googleUser->id;
-                $newUser->email_verified_at = now(); // Consider them verified since Google verified
-                $newUser->credits = 1000; // Give new customers some starting credits
-                $newUser->save();
-                
-                // Assign Customer role
-                $customerRole = Role::where('name', 'Customer')->first();
-                if ($customerRole) {
-                    $newUser->assignRole($customerRole);
+                DBFacade::beginTransaction(); // Use the aliased DB facade here
+                try {
+                    $newUser = new User();
+                    $newUser->name = $googleUser->name;
+                    $newUser->email = $googleUser->email;
+                    $newUser->password = Hash::make(Str::random(16));
+                    
+                    // Check if google_id column exists before using it
+                    if (Schema::hasColumn('users', 'google_id')) {
+                        $newUser->google_id = $googleUser->id;
+                    }
+                    
+                    $newUser->email_verified_at = now(); // Consider them verified since Google verified
+                    $newUser->credits = 1000; // Give new customers some starting credits
+                    $newUser->save();
+                    
+                    // Assign Customer role
+                    $customerRole = Role::where('name', 'Customer')->first();
+                    if ($customerRole) {
+                        $newUser->assignRole($customerRole);
+                    }
+                    
+                    Auth::login($newUser);
+                    DBFacade::commit(); // Use the aliased DB facade here
+                } catch (\Exception $e) {
+                    DBFacade::rollBack(); // Use the aliased DB facade here
+                    Log::error('Failed to create user from Google: ' . $e->getMessage());
+                    return redirect('login')->with('error', 'Unable to create your account. Please try again later.');
                 }
-                
-                Auth::login($newUser);
             }
             
-            return redirect('/'); // Redirect to homepage after successful login
+            return redirect('/');
             
         } catch (\Exception $e) {
-            return redirect('login')->with('error', 'Google authentication failed: ' . $e->getMessage());
+            Log::error('Google authentication error: ' . $e->getMessage());
+            return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
 }
