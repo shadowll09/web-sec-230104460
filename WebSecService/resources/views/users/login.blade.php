@@ -28,9 +28,14 @@
     
     <div class="text-center my-3">
       <p>OR</p>
-      <a href="{{ route('login.google') }}" class="btn btn-danger">
-        <i class="bi bi-google"></i> Login with Google
-      </a>
+      <div class="d-grid gap-2 mb-3">
+        <a href="{{ route('login.google') }}" class="btn btn-danger">
+          <i class="bi bi-google"></i> Login with Google
+        </a>
+        <a href="{{ route('login.linkedin') }}" class="btn btn-primary">
+          <i class="bi bi-linkedin"></i> Login with LinkedIn
+        </a>
+      </div>
       <p class="mt-2 small text-muted">If you don't have an account, we'll create one for you.</p>
     </div>
     </div>

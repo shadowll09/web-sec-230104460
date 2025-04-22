@@ -17,6 +17,14 @@ Route::get('logout', [UsersController::class, 'doLogout'])->name('do_logout');
 Route::get('login/google', [UsersController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('login/google/callback', [UsersController::class, 'handleGoogleCallback']);
 
+// LinkedIn OAuth Routes
+Route::get('login/linkedin', [UsersController::class, 'redirectToLinkedIn'])->name('login.linkedin');
+Route::get('login/linkedin/callback', [UsersController::class, 'handleLinkedInCallback']);
+
+// Facebook OAuth Routes
+Route::get('login/facebook', [UsersController::class, 'redirectToFacebook'])->name('login.facebook');
+Route::get('login/facebook/callback', [UsersController::class, 'handleFacebookCallback']);
+
 // User management
 Route::get('users', [UsersController::class, 'list'])->name('users');
 Route::get('profile/{user?}', [UsersController::class, 'profile'])->name('profile');

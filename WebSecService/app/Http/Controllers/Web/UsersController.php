@@ -296,4 +296,71 @@ class UsersController extends Controller {
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
+
+    /**
+     * Redirect the user to the LinkedIn authentication page.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function redirectToLinkedIn()
+    {
+        return Socialite::driver('linkedin')->redirect();
+    }
+
+    /**
+     * Obtain the user information from LinkedIn.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function handleLinkedInCallback()
+    {
+        try {
+            $linkedinUser = Socialite::driver('linkedin')->user();
+            
+            // Check if user exists
+            $existingUser = User::where('email', $linkedinUser->email)->first();
+            
+            if ($existingUser) {
+                // User exists, login
+                Auth::login($existingUser);
+            } else {
+                // User doesn't exist, create new user
+                DBFacade::beginTransaction();
+                try {
+                    $newUser = new User();
+                    $newUser->name = $linkedinUser->name;
+                    $newUser->email = $linkedinUser->email;
+                    $newUser->password = Hash::make(Str::random(16));
+                    
+                    // Check if linkedin_id column exists before using it
+                    if (Schema::hasColumn('users', 'linkedin_id')) {
+                        $newUser->linkedin_id = $linkedinUser->id;
+                    }
+                    
+                    $newUser->email_verified_at = now(); // Consider them verified since LinkedIn verified
+                    $newUser->credits = 1000; // Give new customers some starting credits
+                    $newUser->save();
+                    
+                    // Assign Customer role
+                    $customerRole = Role::where('name', 'Customer')->first();
+                    if ($customerRole) {
+                        $newUser->assignRole($customerRole);
+                    }
+                    
+                    Auth::login($newUser);
+                    DBFacade::commit();
+                } catch (\Exception $e) {
+                    DBFacade::rollBack();
+                    Log::error('Failed to create user from LinkedIn: ' . $e->getMessage());
+                    return redirect('login')->with('error', 'Unable to create your account. Please try again later.');
+                }
+            }
+            
+            return redirect('/');
+            
+        } catch (\Exception $e) {
+            Log::error('LinkedIn authentication error: ' . $e->getMessage());
+            return redirect('login')->with('error', 'Authentication failed. Please try again.');
+        }
+    }
 }
