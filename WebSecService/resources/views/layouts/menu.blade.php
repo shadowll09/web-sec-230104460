@@ -43,9 +43,9 @@
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center position-relative" href="{{ route('cart') }}">
                 <i class="bi bi-cart me-1"></i> Cart
-                @if(Session::has('cart') && count(Session::get('cart')) > 0)
+                @if(session()->has('cart') && count(session()->get('cart')) > 0)
                   <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger animate__animated animate__pulse animate__infinite">
-                    {{ count(Session::get('cart')) }}
+                    {{ count(session()->get('cart')) }}
                   </span>
                 @endif
               </a>
