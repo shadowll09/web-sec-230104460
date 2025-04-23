@@ -173,7 +173,7 @@ class OrdersController extends Controller
     /**
      * Proceed to checkout
      */
-    public function checkout()
+    public function checkout(Request $request)
     {
         $cart = Session::get('cart', []);
         if (empty($cart)) {
@@ -241,7 +241,59 @@ class OrdersController extends Controller
             return view('orders.insufficient_credits', compact('total', 'user'));
         }
 
-        return view('orders.checkout', compact('cart', 'total', 'user'));
+        return DB::transaction(function() use ($request, $user, $cart, $total) {
+            $freshUser = User::find($user->id);
+            if (!$freshUser->hasEnoughCredits($total)) {
+                return redirect()->route('cart')->with('error', 'Insufficient credits.');
+            }
+
+            $orderItems = [];
+            foreach ($cart as $id => $item) {
+                $product = Product::lockForUpdate()->find($id);
+
+                if (!$product) {
+                    DB::rollBack();
+                    return redirect()->route('cart')->with('error', 'A product has been removed from our system.');
+                }
+
+                $orderItems[] = [
+                    'product' => $product,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price']
+                ];
+            }
+
+            // Create order
+            $order = new Order();
+            $order->user_id = $user->id;
+            $order->total_amount = $total;
+            $order->status = 'pending';
+            $order->shipping_address = $request->shipping_address;
+            $order->billing_address = $request->billing_address;
+            $order->save();
+
+            // Create order items
+            foreach ($orderItems as $item) {
+                $orderItem = new OrderItem();
+                $orderItem->order_id = $order->id;
+                $orderItem->product_id = $item['product']->id;
+                $orderItem->quantity = $item['quantity'];
+                $orderItem->price = $item['price'];
+                $orderItem->save();
+            }
+
+            // Deduct credits from user account after creating the order items
+            if (!$freshUser->deductCredits($total)) {
+                throw new \Exception('Failed to deduct credits');
+            }
+
+            // Clear cart
+            Session::forget('cart');
+
+            // Return to confirmation page
+            return redirect()->route('orders.confirmation', ['order' => $order->id])
+                ->with('success', 'Your order has been placed successfully!');
+        });
     }
 
     /**

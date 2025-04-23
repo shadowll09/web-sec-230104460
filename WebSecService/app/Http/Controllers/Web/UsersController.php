@@ -141,9 +141,10 @@ class UsersController extends Controller {
     }
 
     public function edit(Request $request, User $user = null) {
-
-        $user = $user??auth()->user();
-        if(auth()->id()!=$user?->id) {
+        $user = $user ?? auth()->user();
+        
+        // Fixed permission check - using edit_users instead of show_users
+        if(auth()->id() != $user?->id) {
             if(!auth()->user()->hasPermissionTo('edit_users')) abort(401);
         }
 
@@ -164,89 +165,101 @@ class UsersController extends Controller {
     }
 
     public function save(Request $request, User $user) {
+        // Validate basic input
+        $request->validate([
+            'name' => ['required', 'string', 'min:3', 'max:255'],
+        ]);
 
-        if(auth()->id()!=$user->id) {
-            if(!auth()->user()->hasPermissionTo('show_users')) abort(401);
+        if(auth()->id() != $user->id) {
+            if(!auth()->user()->hasPermissionTo('edit_users')) abort(401); // Fixed permission check
         }
 
         $user->name = $request->name;
         $user->save();
 
         if(auth()->user()->hasPermissionTo('admin_users')) {
+            // Prevent removing Admin role from self or last admin
+            if (auth()->id() == $user->id && $user->hasRole('Admin')) {
+                $hasAdminRole = false;
+                foreach ($request->roles ?? [] as $role) {
+                    if ($role === 'Admin') {
+                        $hasAdminRole = true;
+                        break;
+                    }
+                }
+                
+                if (!$hasAdminRole) {
+                    return redirect()->route('users_edit', $user->id)
+                        ->with('error', 'You cannot remove your own Admin role.');
+                }
+            }
+            
+            // Check if this is the last admin
+            if ($user->hasRole('Admin') && !in_array('Admin', $request->roles ?? [])) {
+                $adminCount = User::role('Admin')->count();
+                if ($adminCount <= 1) {
+                    return redirect()->route('users_edit', $user->id)
+                        ->with('error', 'Cannot remove Admin role from the only admin account.');
+                }
+            }
 
-            $user->syncRoles($request->roles);
-            $user->syncPermissions($request->permissions);
+            $user->syncRoles($request->roles ?? []);
+            $user->syncPermissions($request->permissions ?? []);
 
             Artisan::call('cache:clear');
         }
 
-        //$user->syncRoles([1]);
-        //Artisan::call('cache:clear');
-
-        return redirect(route('profile', ['user'=>$user->id]));
+        return redirect(route('profile', ['user'=>$user->id]))->with('success', 'User updated successfully');
     }
 
     public function delete(Request $request, User $user) {
-
-        if(!auth()->user()->hasPermissionTo('delete_users')) abort(401);
-
-        //$user->delete();
-
-        return redirect()->route('users');
-    }
-
-    public function editPassword(Request $request, User $user = null) {
-
-        $user = $user??auth()->user();
-        if(auth()->id()!=$user?->id) {
-            if(!auth()->user()->hasPermissionTo('edit_users')) abort(401);
+        // Check if trying to delete self
+        if (auth()->id() == $user->id) {
+            return redirect()->route('users')->with('error', 'You cannot delete your own account.');
         }
-
-        return view('users.edit_password', compact('user'));
-    }
+    }        
 
     public function savePassword(Request $request, User $user) {
-
-        if(auth()->id()==$user?->id) {
-
+        // If user is changing their own password
+        if(auth()->id() == $user?->id) {
             $this->validate($request, [
+                'old_password' => ['required'],
                 'password' => ['required', 'confirmed', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
             ]);
 
             if(!Auth::attempt(['email' => $user->email, 'password' => $request->old_password])) {
-
-                Auth::logout();
-                return redirect('/');
+                // Don't log them out, just show an error
+                return redirect()->back()->withErrors('Current password is incorrect.');
             }
         }
+        // If admin is changing someone else's password
+        else if(auth()->user()->hasPermissionTo('admin_users')) {
+            $this->validate($request, [
+                'password' => ['required', 'confirmed', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
+            ]);
+        }
         else if(!auth()->user()->hasPermissionTo('edit_users')) {
-
             abort(401);
         }
 
         $user->password = bcrypt($request->password); //Secure
         $user->save();
 
-        return redirect(route('profile', ['user'=>$user->id]));
+        return redirect(route('profile', ['user'=>$user->id]))->with('success', 'Password updated successfully');
     }
 
-    /**
-     * Redirect the user to the Google authentication page.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function redirectToGoogle()
-    {
+    public function editPassword(Request $request, User $user = null) {
+        $user = $user??auth()->user();
+        if(auth()->id()!=$user?->id) {
+            abort(401);
+        }
+    }
+
+    public function redirectToGoogle() {
         return Socialite::driver('google')->redirect();
     }
 
-    /**
-     * Obtain the user information from Google.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function handleGoogleCallback()
-    {
+    public function handleGoogleCallback() {
         try {
             $googleUser = Socialite::driver('google')->user();
             
@@ -290,30 +303,17 @@ class UsersController extends Controller {
             }
             
             return redirect('/');
-            
         } catch (\Exception $e) {
             Log::error('Google authentication error: ' . $e->getMessage());
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
 
-    /**
-     * Redirect the user to the LinkedIn authentication page.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function redirectToLinkedIn()
-    {
+    public function redirectToLinkedIn() {
         return Socialite::driver('linkedin')->redirect();
     }
 
-    /**
-     * Obtain the user information from LinkedIn.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function handleLinkedInCallback()
-    {
+    public function handleLinkedInCallback() {
         try {
             $linkedinUser = Socialite::driver('linkedin')->user();
             
@@ -357,30 +357,17 @@ class UsersController extends Controller {
             }
             
             return redirect('/');
-            
         } catch (\Exception $e) {
             Log::error('LinkedIn authentication error: ' . $e->getMessage());
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
 
-    /**
-     * Redirect the user to the Facebook authentication page.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function redirectToFacebook()
-    {
+    public function redirectToFacebook() {
         return Socialite::driver('facebook')->redirect();
     }
 
-    /**
-     * Obtain the user information from Facebook.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function handleFacebookCallback()
-    {
+    public function handleFacebookCallback() {
         try {
             $facebookUser = Socialite::driver('facebook')->user();
             
@@ -424,7 +411,6 @@ class UsersController extends Controller {
             }
             
             return redirect('/');
-            
         } catch (\Exception $e) {
             Log::error('Facebook authentication error: ' . $e->getMessage());
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
