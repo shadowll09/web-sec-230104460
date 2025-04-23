@@ -363,4 +363,71 @@ class UsersController extends Controller {
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
+
+    /**
+     * Redirect the user to the Facebook authentication page.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function redirectToFacebook()
+    {
+        return Socialite::driver('facebook')->redirect();
+    }
+
+    /**
+     * Obtain the user information from Facebook.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function handleFacebookCallback()
+    {
+        try {
+            $facebookUser = Socialite::driver('facebook')->user();
+            
+            // Check if user exists
+            $existingUser = User::where('email', $facebookUser->email)->first();
+            
+            if ($existingUser) {
+                // User exists, login
+                Auth::login($existingUser);
+            } else {
+                // User doesn't exist, create new user
+                DBFacade::beginTransaction();
+                try {
+                    $newUser = new User();
+                    $newUser->name = $facebookUser->name;
+                    $newUser->email = $facebookUser->email;
+                    $newUser->password = Hash::make(Str::random(16));
+                    
+                    // Check if facebook_id column exists before using it
+                    if (Schema::hasColumn('users', 'facebook_id')) {
+                        $newUser->facebook_id = $facebookUser->id;
+                    }
+                    
+                    $newUser->email_verified_at = now(); // Consider them verified since Facebook verified
+                    $newUser->credits = 1000; // Give new customers some starting credits
+                    $newUser->save();
+                    
+                    // Assign Customer role
+                    $customerRole = Role::where('name', 'Customer')->first();
+                    if ($customerRole) {
+                        $newUser->assignRole($customerRole);
+                    }
+                    
+                    Auth::login($newUser);
+                    DBFacade::commit();
+                } catch (\Exception $e) {
+                    DBFacade::rollBack();
+                    Log::error('Failed to create user from Facebook: ' . $e->getMessage());
+                    return redirect('login')->with('error', 'Unable to create your account. Please try again later.');
+                }
+            }
+            
+            return redirect('/');
+            
+        } catch (\Exception $e) {
+            Log::error('Facebook authentication error: ' . $e->getMessage());
+            return redirect('login')->with('error', 'Authentication failed. Please try again.');
+        }
+    }
 }

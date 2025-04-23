@@ -35,6 +35,9 @@
         <a href="{{ route('login.linkedin') }}" class="btn btn-primary">
           <i class="bi bi-linkedin"></i> Login with LinkedIn
         </a>
+        <a href="{{ route('login.facebook') }}" class="btn btn-primary" style="background-color: #1877F2; border-color: #1877F2;">
+          <i class="bi bi-facebook"></i> Login with Facebook
+        </a>
       </div>
       <p class="mt-2 small text-muted">If you don't have an account, we'll create one for you.</p>
     </div>

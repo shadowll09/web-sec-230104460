@@ -10,18 +10,22 @@
 - [Security Considerations](#security-considerations)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
+- [Deployment and Maintenance](#deployment-and-maintenance)
 
 ## Project Overview
 
-WebSecService is a Laravel-based web application designed as an e-commerce platform with robust security measures. The application implements role-based access control with three primary user types: Admin, Employee, and Customer. The platform allows customers to browse products, make purchases using a credit system, and manage their accounts.
+WebSecService is a secure Laravel-based e-commerce platform with robust security measures. The application implements role-based access control with three primary user types: Admin, Employee, and Customer. The platform allows customers to browse products, make purchases using a credit system, and manage their accounts with multiple authentication options.
 
 ### Key Features
-- User authentication and role-based authorization
+- Multi-provider authentication (Email, Google, LinkedIn, Facebook)
+- Role-based authorization
 - Product catalog and management
-- Credit system for customers
+- Credit system for purchases
 - Admin dashboard for user and product management
 - Secure password handling with strong validation rules
 - Data validation and sanitization
+- Enhanced UI with responsive design
+- Comprehensive security headers
 
 ## System Architecture
 
@@ -30,102 +34,57 @@ The application follows the Model-View-Controller (MVC) architecture pattern pro
 - **Models**: Represent database tables and relationships (User, Product, etc.)
 - **Views**: Blade templates rendering the frontend of the application
 - **Controllers**: Handle business logic and user requests
+- **Middleware**: Process HTTP requests and enforce security measures
 
 ### Technology Stack
 - **Backend**: PHP 8.x with Laravel 10.x
-- **Frontend**: Blade templates with Bootstrap CSS
+- **Frontend**: Blade templates with Bootstrap CSS and custom styling
 - **Database**: MySQL/MariaDB
 - **Caching**: Redis
 - **Queue System**: Laravel's built-in queue system
+- **Authentication**: Multi-provider OAuth (Google, LinkedIn, Facebook)
 
 ## Database Design
 
-### Main Tables
-1. **users**: Stores user account information
-   - id, name, email, password, credits, etc.
-   
-2. **products**: Stores product information
-   - code, name, model, description, price, stock_quantity, photo
-   
-3. **roles**: Defines user roles in the system (Admin, Employee, Customer)
+The database follows a normalized structure with the following key entities:
 
-4. **permissions**: Defines granular permissions for users
+1. **Users**: Stores user account information
+   - Standard fields: id, name, email, password
+   - Social authentication: google_id, linkedin_id, facebook_id
+   - Application-specific: credits, role assignments
 
-5. **model_has_roles**: Links users to roles (many-to-many relationship)
+2. **Products**: Stores product information
+   - Fields: id, name, description, price, stock, image_path
 
-6. **model_has_permissions**: Links users to direct permissions
+3. **Orders**: Records customer purchases
+   - Fields: id, user_id, status, total
 
-7. **role_has_permissions**: Links roles to permissions
+4. **Order Items**: Links orders to products
+   - Fields: id, order_id, product_id, quantity, price
 
-### Database Configuration
-
-The database configuration is defined in `config/database.php`, supporting multiple database connections:
-- Default MySQL/MariaDB connection for primary data storage
-- Redis connection for caching and session management
-
-### Migrations
-
-Database migrations are used to create and modify the database schema in a structured, version-controlled manner. Each migration file defines a specific change to the database structure.
-
-### Seeders
-
-The application uses database seeders to populate initial data:
-
-1. **DatabaseSeeder**: The main seeder that orchestrates other seeders
-   - Creates initial admin, employee, and customer users
-   - Sets up initial roles and permissions
-   - Calls the ProductSeeder
-
-2. **ProductSeeder**: Populates the products table with initial product data
-   - Includes product codes, names, descriptions, pricing, and image references
-
-Example from ProductSeeder:
-```php
-$products = [
-    [
-        'code' => 'LAPTOP-001',
-        'name' => 'MacBook Pro 16"',
-        'model' => 'Apple MacBook Pro 2023',
-        'description' => 'Powerful laptop with M2 Pro chip, 16GB RAM, 512GB SSD',
-        'price' => 2499.99,
-        'stock_quantity' => 50,
-        'photo' => 'macbook.jpg'
-    ],
-    // Additional products...
-];
-```
+5. **Roles & Permissions**: Managed by Spatie's permission package
+   - Pre-defined roles: Admin, Employee, Customer
+   - Granular permissions for various actions
 
 ## Authentication & Authorization
 
-### Authentication
+The application implements a comprehensive authentication system:
 
-User authentication is implemented using Laravel's built-in authentication system:
-- User registration with validation
-- Secure login/logout functionality
-- Password encryption using bcrypt
-- Password reset capabilities
+1. **Multi-provider Authentication**:
+   - Traditional email/password login
+   - OAuth integration with Google
+   - OAuth integration with LinkedIn
+   - OAuth integration with Facebook
 
-### Authorization
-
-The application utilizes the Spatie Laravel-Permission package for role-based access control:
-
-1. **Roles**:
+2. **Role-based Access Control**:
    - Admin: Full system access
-   - Employee: Limited administrative access
-   - Customer: Regular user access
+   - Employee: Limited management access
+   - Customer: Standard user access
 
-2. **Permissions**:
-   - show_users: Ability to view user profiles
-   - edit_users: Ability to edit user information
-   - delete_users: Ability to delete users
-   - manage_employees: Ability to create and manage employee accounts
-   - admin_users: Advanced user management capabilities
-
-Permission checks are implemented throughout the application to ensure users can only access features appropriate for their role:
-
-```php
-if(!auth()->user()->hasPermissionTo('show_users')) abort(401);
-```
+3. **Password Security**:
+   - Strong password requirements (length, complexity)
+   - Secure password hashing
+   - Password reset functionality
 
 ## Backend Implementation
 
@@ -135,14 +94,19 @@ The application follows a modular controller approach:
 
 1. **UsersController**: Manages user-related operations
    - User registration and authentication
+   - Social login handling for multiple providers
    - Profile management
    - Role and permission assignment
-   - Password management with secure validation rules
 
-2. **Other Controllers** (implied from the structure):
-   - Product management
-   - Order processing
-   - Admin dashboard functionality
+2. **ProductsController**: Handles product management
+   - Product listing and details
+   - Inventory management
+   - Product search and filtering
+
+3. **OrdersController**: Processes customer orders
+   - Order creation and management
+   - Payment processing
+   - Order history and tracking
 
 ### Models
 
@@ -151,69 +115,73 @@ The application uses Eloquent ORM models to interact with the database:
 1. **User**: Represents user accounts
    - Uses Spatie's HasRoles trait for role management
    - Includes relationships to orders and other entities
+   - Contains social authentication fields
 
 2. **Product**: Represents product information
    - Contains product details, pricing, and inventory information
+   - Relationships to orders and categories
 
-3. **Other Models** (implied):
-   - Order
-   - Transaction
-   - Various relationship models
+3. **Order**: Manages customer purchases
+   - Relationship to users and order items
+   - Order status tracking
 
 ### Middleware
 
 Custom middleware is used to:
 - Enforce authentication
 - Check role-based permissions
+- Implement security headers
 - Prevent unauthorized access
 - Handle API rate limiting
 
 ## Frontend Implementation
 
-The frontend is built using Laravel's Blade templating engine with a responsive design:
+The frontend is built using Laravel's Blade templating engine with an enhanced responsive design:
 
 ### Key Views
 
-1. **User Management**:
-   - Registration form
-   - Login form
-   - User profile
-   - User editing
+1. **Authentication Views**:
+   - Login form with social login options
+   - Registration form with validation
+   - User profile management
 
 2. **Product Catalog**:
-   - Product listings
-   - Product details
-   - Search and filtering
+   - Responsive product listings
+   - Detailed product views
+   - Search and filtering functionality
 
 3. **Admin Dashboard**:
    - User management interface
-   - Product management
-   - Sales reporting
+   - Product management dashboard
+   - Sales reporting and analytics
 
-### Form Validation
+### UI Enhancements
 
-Frontend forms are validated on both client and server sides:
-- HTML5 form validation
-- JavaScript validation
-- Server-side validation in controllers
+The application features:
+- Custom CSS for improved aesthetics
+- Responsive design for mobile compatibility
+- Accessibility improvements
+- Dark mode support
+- Enhanced form validation feedback
 
 ## Security Considerations
 
-The application implements several security measures:
+The application implements comprehensive security measures:
 
 1. **Authentication Security**:
-   - Strong password requirements (numbers, letters, mixed case, symbols)
+   - Strong password requirements
    - Encrypted password storage using bcrypt
    - Protection against brute force attacks
+   - Secure OAuth implementation
 
-2. **Authorization Controls**:
-   - Fine-grained permission system
-   - Role-based access control
-   - Explicit permission checks in controllers
+2. **Content Security Policy**:
+   - Strict CSP headers to prevent XSS
+   - Source whitelisting for scripts and styles
+   - Frame ancestors control
 
-3. **Data Validation**:
+3. **Data Protection**:
    - Input validation for all user-provided data
-   - Sanitization of data before database operations
+   - Sanitization before database operations
    - Type checking and boundary validation
 
 4. **CSRF Protection**:
@@ -224,35 +192,33 @@ The application implements several security measures:
    - Use of Eloquent ORM and prepared statements
    - Parameter binding for database queries
 
-6. **XSS Prevention**:
-   - Output escaping in Blade templates
-   - Content Security Policy implementation
-
-7. **Sensitive Data Handling**:
-   - Encryption of sensitive data using Laravel's encryption tools
-   - Secure session handling
+6. **Additional Security Headers**:
+   - X-Content-Type-Options
+   - X-Frame-Options
+   - Referrer-Policy
+   - Permissions-Policy
+   - Strict-Transport-Security
 
 ## API Endpoints
 
-The application provides RESTful API endpoints for various operations:
+The application provides a RESTful API for integration with external systems:
 
 1. **Authentication Endpoints**:
-   - POST /api/login
-   - POST /api/register
-   - POST /api/logout
+   - POST `/api/login`: User authentication
+   - POST `/api/register`: User registration
+   - GET `/api/user`: Get current user
 
-2. **User Management Endpoints**:
-   - GET /api/users
-   - GET /api/users/{id}
-   - PUT /api/users/{id}
-   - DELETE /api/users/{id}
+2. **Product Endpoints**:
+   - GET `/api/products`: List all products
+   - GET `/api/products/{id}`: Get specific product
+   - POST `/api/products`: Create product (Auth required)
+   - PUT `/api/products/{id}`: Update product (Auth required)
+   - DELETE `/api/products/{id}`: Delete product (Auth required)
 
-3. **Product Endpoints**:
-   - GET /api/products
-   - GET /api/products/{id}
-   - POST /api/products
-   - PUT /api/products/{id}
-   - DELETE /api/products/{id}
+3. **Order Endpoints**:
+   - GET `/api/orders`: Get user orders (Auth required)
+   - POST `/api/orders`: Create new order (Auth required)
+   - GET `/api/orders/{id}`: Get order details (Auth required)
 
 ## Testing
 
@@ -273,6 +239,7 @@ The application includes comprehensive testing:
    - XSS vulnerability testing
    - SQL injection testing
    - Authentication bypass testing
+   - OAuth functionality testing
 
 ## Deployment and Maintenance
 
@@ -281,6 +248,7 @@ The application is designed to be deployed in a secure production environment:
 1. **Environment Configuration**:
    - Environment-specific configuration files
    - Secure environment variable management
+   - Social auth provider configuration
 
 2. **Performance Optimization**:
    - Redis caching for improved performance
@@ -291,6 +259,7 @@ The application is designed to be deployed in a secure production environment:
    - Comprehensive error logging
    - User activity tracking
    - Performance monitoring
+   - Authentication attempt logging
 
 4. **Backup and Recovery**:
    - Regular database backups

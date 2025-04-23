@@ -19,27 +19,36 @@ class SecurityHeaders
     {
         $response = $next($request);
         
-        // Content-Security-Policy
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://ajax.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'");
+        // Content-Security-Policy - Adjust based on your specific external resources
+        $response->headers->set(
+            'Content-Security-Policy', 
+            "default-src 'self'; " .
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://ajax.googleapis.com; " .
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " .
+            "font-src 'self' https://fonts.gstatic.com; " .
+            "img-src 'self' data: https://*.fbcdn.net https://*.googleusercontent.com; " .
+            "connect-src 'self' https://graph.facebook.com https://accounts.google.com https://api.linkedin.com; " .
+            "frame-src 'self' https://www.facebook.com https://accounts.google.com https://www.linkedin.com;"
+        );
         
-        // X-Content-Type-Options
+        // Prevent MIME type sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         
-        // X-Frame-Options
+        // Prevent clickjacking
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         
-        // Referrer-Policy
+        // Referrer policy to limit information sent to other websites
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         
-        // Permissions-Policy
+        // Permissions policy - restrict browser features
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
         
-        // Strict-Transport-Security
-        if (!app()->environment('local')) {
+        // Enable strict HTTPS on production
+        if (app()->environment('production')) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
         
-        // X-XSS-Protection
+        // XSS Protection header
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         
         return $response;
