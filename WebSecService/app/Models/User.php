@@ -69,26 +69,48 @@ class User extends Authenticatable
     }
 
     /**
-     * Deduct credits from user account
+     * Deduct credits from user account with validation
      */
     public function deductCredits(float $amount): bool
     {
+        // Validate amount is positive
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Credit amount must be positive.');
+        }
+        
         if (!$this->hasEnoughCredits($amount)) {
             return false;
         }
 
         $this->credits -= $amount;
         $this->save();
-
+        
+        // Log the transaction
+        \Log::info("Deducted {$amount} credits from user ID {$this->id}. New balance: {$this->credits}");
+        
         return true;
     }
 
     /**
-     * Add credits to user account
+     * Add credits to user account with validation
      */
     public function addCredits(float $amount): void
     {
+        // Validate amount is positive
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Credit amount must be positive.');
+        }
+        
+        // Cap maximum amount that can be added in a single transaction for security
+        $maxSingleTransaction = config('app.max_credit_transaction', 10000);
+        if ($amount > $maxSingleTransaction) {
+            throw new \InvalidArgumentException("Cannot add more than {$maxSingleTransaction} credits in a single transaction.");
+        }
+        
         $this->credits += $amount;
         $this->save();
+        
+        // Log the transaction
+        \Log::info("Added {$amount} credits to user ID {$this->id}. New balance: {$this->credits}");
     }
 }

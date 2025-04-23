@@ -3,10 +3,10 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Password Complexity Requirements
+    | Password Security
     |--------------------------------------------------------------------------
     |
-    | These options define the password complexity requirements for the application.
+    | Define password security requirements across the application
     |
     */
     'password' => [
@@ -15,75 +15,65 @@ return [
         'require_lowercase' => true,
         'require_numbers' => true,
         'require_symbols' => true,
-        'dictionary_check' => true,
-        'prevent_common_passwords' => true,
+        'prevent_common' => true,
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Account Lockout
-    |--------------------------------------------------------------------------
-    |
-    | This section controls the account lockout settings.
-    |
-    */
-    'lockout' => [
-        'enabled' => true,
-        'max_attempts' => 5,
-        'decay_minutes' => 5,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Two-Factor Authentication
-    |--------------------------------------------------------------------------
-    |
-    | Options for two-factor authentication.
-    |
-    */
-    '2fa' => [
-        'enabled' => true,
-        'force_for_admins' => true,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Content Security Policy
-    |--------------------------------------------------------------------------
-    |
-    | CSP directives.
-    |
-    */
-    'csp' => [
-        'enable' => true,
-        'report_only' => false,
-        'report_uri' => null,
-    ],
-
+    
     /*
     |--------------------------------------------------------------------------
     | Rate Limiting
     |--------------------------------------------------------------------------
     |
-    | Configure rate limiting for various routes.
+    | Define rate limiting for various actions
     |
     */
     'rate_limiting' => [
-        'api' => [
-            'max_attempts' => 60,
-            'decay_minutes' => 1,
-        ],
         'login' => [
             'max_attempts' => 5,
             'decay_minutes' => 1,
         ],
         'register' => [
             'max_attempts' => 3,
-            'decay_minutes' => 5,
+            'decay_minutes' => 10,
         ],
         'password_reset' => [
             'max_attempts' => 3,
             'decay_minutes' => 60,
         ],
+        'api' => [
+            'max_attempts' => 60,
+            'decay_minutes' => 1,
+        ],
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Content Security
+    |--------------------------------------------------------------------------
+    |
+    | Define content security policies
+    |
+    */
+    'content_security' => [
+        'allow_iframe' => false,
+        'allow_inline_scripts' => false,
+        'allowed_domains' => [
+            'self',
+            'https://cdn.jsdelivr.net',
+            'https://fonts.googleapis.com',
+            'https://fonts.gstatic.com',
+        ],
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Input Validation
+    |--------------------------------------------------------------------------
+    |
+    | Define input validation rules
+    |
+    */
+    'input_validation' => [
+        'sanitize_html' => true,
+        'allow_html_in' => ['description'], // Fields that can contain limited HTML
     ],
 ];

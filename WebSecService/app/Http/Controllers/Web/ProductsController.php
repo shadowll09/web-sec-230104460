@@ -53,24 +53,37 @@ class ProductsController extends Controller {
 	}
 
 	public function save(Request $request, Product $product = null) {
-		// Check if user has permission to add or edit products
-		if(!auth()->user()->hasAnyPermission(['add_products', 'edit_products'])) abort(401);
+        // Check if user has permission to add or edit products
+        if(!auth()->user()->hasAnyPermission(['add_products', 'edit_products'])) abort(401);
 
-		$this->validate($request, [
-	        'code' => ['required', 'string', 'max:32'],
-	        'name' => ['required', 'string', 'max:128'],
-	        'model' => ['required', 'string', 'max:256'],
-	        'description' => ['required', 'string', 'max:1024'],
-	        'price' => ['required', 'numeric'],
-            'stock_quantity' => ['required', 'integer', 'min:0'],
-	    ]);
+        $this->validate($request, [
+            'code' => ['required', 'string', 'max:32'],
+            'name' => ['required', 'string', 'max:128'],
+            'model' => ['required', 'string', 'max:256'],
+            'description' => ['required', 'string', 'max:1024', 'no_script_tags', 'safe_html'],
+            'price' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'stock_quantity' => ['required', 'integer', 'min:0', 'max:100000'],
+            'photo' => ['nullable', 'string', 'max:255'],
+        ]);
 
-		$product = $product??new Product();
-		$product->fill($request->all());
-		$product->save();
+        $product = $product ?? new Product();
+        
+        // Fix mass assignment by explicitly setting fields
+        $product->code = $request->input('code');
+        $product->name = $request->input('name');
+        $product->model = $request->input('model');
+        $product->description = $request->input('description');
+        $product->price = $request->input('price');
+        $product->stock_quantity = $request->input('stock_quantity');
+        
+        if ($request->has('photo')) {
+            $product->photo = $request->input('photo');
+        }
+        
+        $product->save();
 
-		return redirect()->route('products_list');
-	}
+        return redirect()->route('products_list')->with('success', 'Product saved successfully');
+    }
 
 	public function delete(Request $request, Product $product) {
 		// Check if user has permission to delete products

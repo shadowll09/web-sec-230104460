@@ -213,10 +213,25 @@ class UsersController extends Controller {
     }
 
     public function delete(Request $request, User $user) {
+        if(!auth()->user()->hasPermissionTo('delete_users')) abort(401);
+        
         // Check if trying to delete self
         if (auth()->id() == $user->id) {
             return redirect()->route('users')->with('error', 'You cannot delete your own account.');
         }
+        
+        // Check if this is the only admin
+        if ($user->hasRole('Admin')) {
+            $adminCount = User::role('Admin')->count();
+            if ($adminCount <= 1) {
+                return redirect()->route('users')->with('error', 'Cannot delete the only admin account.');
+            }
+        }
+
+        // Safely delete the user
+        $user->delete();
+        
+        return redirect()->route('users')->with('success', 'User deleted successfully');
     }        
 
     public function savePassword(Request $request, User $user) {
@@ -250,9 +265,16 @@ class UsersController extends Controller {
 
     public function editPassword(Request $request, User $user = null) {
         $user = $user??auth()->user();
-        if(auth()->id()!=$user?->id) {
-            abort(401);
+        
+        // Fixed permission check
+        if(auth()->id() != $user?->id) {
+            if(!auth()->user()->hasPermissionTo('edit_users') && 
+               !auth()->user()->hasPermissionTo('admin_users')) {
+                abort(401);
+            }
         }
+        
+        return view('users.edit_password', compact('user'));
     }
 
     public function redirectToGoogle() {

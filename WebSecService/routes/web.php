@@ -8,22 +8,25 @@ use App\Http\Controllers\UserController;
 
 // Auth routes
 Route::get('register', [UsersController::class, 'register'])->name('register');
-Route::post('register', [UsersController::class, 'doRegister'])->name('do_register');
+Route::post('register', [UsersController::class, 'doRegister'])->name('do_register')->middleware('throttle:3,5');
 Route::get('login', [UsersController::class, 'login'])->name('login');
-Route::post('login', [UsersController::class, 'doLogin'])->name('do_login');
+Route::post('login', [UsersController::class, 'doLogin'])->name('do_login')->middleware('rate.login');
 Route::get('logout', [UsersController::class, 'doLogout'])->name('do_logout');
 
-// Google OAuth Routes
-Route::get('login/google', [UsersController::class, 'redirectToGoogle'])->name('login.google');
-Route::get('login/google/callback', [UsersController::class, 'handleGoogleCallback']);
+// Social login routes with rate limiting
+Route::middleware(['throttle:10,1'])->group(function () {
+    // Google OAuth Routes
+    Route::get('login/google', [UsersController::class, 'redirectToGoogle'])->name('login.google');
+    Route::get('login/google/callback', [UsersController::class, 'handleGoogleCallback']);
 
-// LinkedIn OAuth Routes
-Route::get('login/linkedin', [UsersController::class, 'redirectToLinkedIn'])->name('login.linkedin');
-Route::get('login/linkedin/callback', [UsersController::class, 'handleLinkedInCallback']);
+    // LinkedIn OAuth Routes
+    Route::get('login/linkedin', [UsersController::class, 'redirectToLinkedIn'])->name('login.linkedin');
+    Route::get('login/linkedin/callback', [UsersController::class, 'handleLinkedInCallback']);
 
-// Facebook OAuth Routes
-Route::get('login/facebook', [UsersController::class, 'redirectToFacebook'])->name('login.facebook');
-Route::get('login/facebook/callback', [UsersController::class, 'handleFacebookCallback']);
+    // Facebook OAuth Routes
+    Route::get('login/facebook', [UsersController::class, 'redirectToFacebook'])->name('login.facebook');
+    Route::get('login/facebook/callback', [UsersController::class, 'handleFacebookCallback']);
+}); 
 
 // User management
 Route::get('users', [UsersController::class, 'list'])->name('users');

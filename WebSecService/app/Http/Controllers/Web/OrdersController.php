@@ -453,9 +453,9 @@ class OrdersController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Validate request
-        $request->validate([
-            'amount' => 'required|numeric|min:1'
+        // Enhanced validation
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01|max:10000|regex:/^\d+(\.\d{1,2})?$/'
         ]);
 
         // Ensure target user is a customer
@@ -463,10 +463,23 @@ class OrdersController extends Controller
             return redirect()->back()->with('error', 'Credits can only be added to customer accounts.');
         }
 
-        // Add credits
-        $user->addCredits($request->amount);
+        // Log the operation for audit purposes
+        \Log::info("User {$request->user()->id} ({$request->user()->email}) added {$validated['amount']} credits to user {$user->id} ({$user->email})");
+
+        // Add credits using Database transaction to prevent race conditions
+        DB::transaction(function () use ($user, $validated) {
+            // Refetch the user in the transaction to prevent race conditions
+            $freshUser = User::lockForUpdate()->find($user->id);
+            
+            // Check if user still exists
+            if (!$freshUser) {
+                throw new \Exception('User no longer exists');
+            }
+            
+            $freshUser->addCredits($validated['amount']);
+        });
 
         return redirect()->route('list_customers')
-            ->with('success', "Successfully added {$request->amount} credits to {$user->name}'s account.");
+            ->with('success', "Successfully added {$validated['amount']} credits to {$user->name}'s account.");
     }
 }

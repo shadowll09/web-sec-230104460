@@ -3,7 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Config;
 
 class SecurityAudit extends Command
 {
@@ -19,7 +22,7 @@ class SecurityAudit extends Command
      *
      * @var string
      */
-    protected $description = 'Perform a security audit on the application';
+    protected $description = 'Audit the application for common security vulnerabilities';
 
     /**
      * Execute the console command.
@@ -28,23 +31,50 @@ class SecurityAudit extends Command
     {
         $this->info('Starting WebSecService Security Audit...');
         $issues = 0;
-        
-        // Check security headers
-        $this->info('Checking security headers...');
-        if (!class_exists('\App\Http\Middleware\SecurityHeaders')) {
-            $this->error('❌ SecurityHeaders middleware not found');
+
+        // Check environment mode
+        $this->info('Checking environment...');
+        if (app()->environment('production') && config('app.debug')) {
+            $this->error('❌ Debug mode is enabled in production environment');
             $issues++;
+            if ($this->option('fix')) {
+                // We don't automatically fix this as it requires .env modification
+                $this->warn('To fix: Set APP_DEBUG=false in your .env file');
+            }
         } else {
-            $this->info('✅ SecurityHeaders middleware exists');
+            $this->info('✅ Debug mode correctly configured for environment');
         }
+
+        // Check important directories permissions
+        $this->info('Checking directory permissions...');
+        $directories = [
+            storage_path(),
+            base_path('bootstrap/cache'),
+        ];
         
-        // Check .env file permissions
-        $this->info('Checking .env file permissions...');
+        foreach ($directories as $dir) {
+            if (file_exists($dir)) {
+                $perms = fileperms($dir);
+                if (($perms & 0x0002) !== 0) { // World writable
+                    $this->error("❌ Directory $dir is world-writable: " . decoct($perms & 0777));
+                    $issues++;
+                    if ($this->option('fix')) {
+                        chmod($dir, 0755);
+                        $this->info("🔧 Fixed permissions for $dir");
+                    }
+                } else {
+                    $this->info("✅ $dir has secure permissions");
+                }
+            }
+        }
+
+        // Check .env file
+        $this->info('Checking .env file...');
         $envPath = base_path('.env');
-        if (File::exists($envPath)) {
+        if (file_exists($envPath)) {
             $perms = fileperms($envPath);
-            if (($perms & 0x0092) !== 0) {
-                $this->error('❌ .env file has insecure permissions: ' . decoct($perms & 0777));
+            if (($perms & 0x0077) !== 0) { // Should be 0600 or similar
+                $this->error('❌ .env file permissions too open: ' . decoct($perms & 0777));
                 $issues++;
                 if ($this->option('fix')) {
                     chmod($envPath, 0600);
@@ -54,50 +84,26 @@ class SecurityAudit extends Command
                 $this->info('✅ .env file has secure permissions');
             }
         }
-        
-        // Check storage directory permissions
-        $this->info('Checking storage directory permissions...');
-        $storagePath = storage_path();
-        if (File::exists($storagePath)) {
-            $perms = fileperms($storagePath);
-            if (($perms & 0x0002) !== 0) {
-                $this->error('❌ storage directory has world-writable permissions');
-                $issues++;
-                if ($this->option('fix')) {
-                    chmod($storagePath, 0755);
-                    $this->info('🔧 Fixed storage directory permissions');
-                }
-            } else {
-                $this->info('✅ storage directory has secure permissions');
-            }
-        }
-        
-        // Check debug mode
-        $this->info('Checking debug mode...');
-        if (config('app.debug') === true && config('app.env') === 'production') {
-            $this->error('❌ Debug mode enabled in production');
+
+        // Check middleware configuration
+        $this->info('Checking security middleware...');
+        if (!app()->has('App\Http\Middleware\SecurityHeaders')) {
+            $this->error('❌ SecurityHeaders middleware not found or not registered');
             $issues++;
-            if ($this->option('fix')) {
-                $this->warn('Cannot automatically disable debug mode. Please update your .env file manually.');
-            }
-        } else if (config('app.env') === 'production') {
-            $this->info('✅ Debug mode correctly disabled in production');
+        } else {
+            $this->info('✅ SecurityHeaders middleware registered');
         }
-        
-        // Check for HTTPS configuration
-        $this->info('Checking HTTPS configuration...');
-        if (config('app.env') === 'production' && !config('session.secure')) {
+
+        // Check for HTTPS-only cookies in production
+        $this->info('Checking secure cookie settings...');
+        if (app()->environment('production') && !config('session.secure')) {
             $this->error('❌ Session cookies not set to secure in production');
             $issues++;
-        } else if (config('app.env') === 'production') {
+        } else if (app()->environment('production')) {
             $this->info('✅ Session cookies properly secured');
         }
-        
-        // Check for installed packages with vulnerabilities
-        $this->info('Checking for package vulnerabilities...');
-        $this->warn('This requires an external service. Consider running: composer audit');
-        
-        // Summary
+
+        // Report results
         $this->newLine();
         if ($issues === 0) {
             $this->info('✅ Security audit completed. No issues found!');
