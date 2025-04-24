@@ -20,7 +20,7 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!Auth::check()) {
-            return redirect('login');
+            return redirect()->route('login')->with('error', 'Please login to access this page.');
         }
 
         $user = Auth::user();
@@ -39,4 +39,4 @@ class CheckRole
         // If we reach here, user doesn't have any of the required roles
         abort(403, 'You do not have the required role to access this page.');
     }
-} 
+}

@@ -45,7 +45,9 @@ class ProductsController extends Controller {
 
 	public function edit(Request $request, Product $product = null) {
 		// Check if user has permission to edit products
-		if(!auth()->user()->hasPermissionTo('edit_products')) abort(401);
+		if(!auth()->user()->hasPermissionTo('edit_products')) {
+			abort(403, 'You do not have permission to edit products.');
+		}
 
 		$product = $product??new Product();
 
@@ -54,7 +56,9 @@ class ProductsController extends Controller {
 
 	public function save(Request $request, Product $product = null) {
         // Check if user has permission to add or edit products
-        if(!auth()->user()->hasAnyPermission(['add_products', 'edit_products'])) abort(401);
+        if(!auth()->user()->hasAnyPermission(['add_products', 'edit_products'])) {
+			abort(403, 'You do not have permission to add or edit products.');
+		}
 
         $this->validate($request, [
             'code' => ['required', 'string', 'max:32'],
@@ -87,7 +91,7 @@ class ProductsController extends Controller {
 
 	public function delete(Request $request, Product $product) {
 		// Check if user has permission to delete products
-		if(!auth()->user()->hasPermissionTo('delete_products')) abort(401);
+		if(!auth()->user()->hasPermissionTo('delete_products')) abort(403, 'You do not have permission to delete products.');
 
 		$product->delete();
 

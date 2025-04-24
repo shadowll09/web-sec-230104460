@@ -27,7 +27,10 @@ class UsersController extends Controller {
 	use ValidatesRequests;
 
     public function list(Request $request) {
-        if(!auth()->user()->hasPermissionTo('show_users'))abort(401);
+        if (!auth()->user()->hasPermissionTo('show_users')) {
+            abort(403, 'You do not have permission to view users.');
+        }
+        
         $query = User::select('*');
         $query->when($request->keywords,
         fn($q)=> $q->where("name", "like", "%$request->keywords%"));
@@ -66,14 +69,18 @@ class UsersController extends Controller {
 
     public function createEmployee(Request $request) {
         // Check if the user has permission to manage employees
-        if(!auth()->user()->hasPermissionTo('manage_employees')) abort(401);
+        if(!auth()->user()->hasPermissionTo('manage_employees')) {
+            abort(403, 'You do not have permission to manage employees.');
+        }
 
         return view('users.create_employee');
     }
 
     public function saveEmployee(Request $request) {
         // Check if the user has permission to manage employees
-        if(!auth()->user()->hasPermissionTo('manage_employees')) abort(401);
+        if(!auth()->user()->hasPermissionTo('manage_employees')) {
+            abort(403, 'You do not have permission to manage employees.');
+        }
 
         try {
             $this->validate($request, [
@@ -124,7 +131,7 @@ class UsersController extends Controller {
 
         $user = $user??auth()->user();
         if(auth()->id()!=$user->id) {
-            if(!auth()->user()->hasPermissionTo('show_users')) abort(401);
+            if(!auth()->user()->hasPermissionTo('show_users')) abort(403);
         }
 
         $permissions = [];
@@ -145,7 +152,7 @@ class UsersController extends Controller {
         
         // Fixed permission check - using edit_users instead of show_users
         if(auth()->id() != $user?->id) {
-            if(!auth()->user()->hasPermissionTo('edit_users')) abort(401);
+            if(!auth()->user()->hasPermissionTo('edit_users')) abort(403);
         }
 
         $roles = [];
@@ -171,7 +178,7 @@ class UsersController extends Controller {
         ]);
 
         if(auth()->id() != $user->id) {
-            if(!auth()->user()->hasPermissionTo('edit_users')) abort(401); // Fixed permission check
+            if(!auth()->user()->hasPermissionTo('edit_users')) abort(403); // Fixed permission check
         }
 
         $user->name = $request->name;
@@ -213,7 +220,7 @@ class UsersController extends Controller {
     }
 
     public function delete(Request $request, User $user) {
-        if(!auth()->user()->hasPermissionTo('delete_users')) abort(401);
+        if(!auth()->user()->hasPermissionTo('delete_users')) abort(403);
         
         // Check if trying to delete self
         if (auth()->id() == $user->id) {
@@ -254,7 +261,7 @@ class UsersController extends Controller {
             ]);
         }
         else if(!auth()->user()->hasPermissionTo('edit_users')) {
-            abort(401);
+            abort(403);
         }
 
         $user->password = bcrypt($request->password); //Secure
@@ -270,7 +277,7 @@ class UsersController extends Controller {
         if(auth()->id() != $user?->id) {
             if(!auth()->user()->hasPermissionTo('edit_users') && 
                !auth()->user()->hasPermissionTo('admin_users')) {
-                abort(401);
+                abort(403);
             }
         }
         
@@ -450,11 +457,6 @@ class UsersController extends Controller {
         }
 
         $user = Auth::user();
-        $isAdmin = $user->hasRole('Admin');
-
-        if (!$isAdmin) {
-            return redirect()->back()->with('error', 'Only admin users can fix permissions.');
-        }
 
         try {
             // Begin transaction to ensure all changes are applied atomically
@@ -462,6 +464,7 @@ class UsersController extends Controller {
 
             // Clear cache to ensure fresh permission data
             Artisan::call('cache:clear');
+            Artisan::call('permission:cache-reset');
 
             // Make sure the Admin role has all permissions
             $adminRole = Role::where('name', 'Admin')->first();
@@ -480,6 +483,9 @@ class UsersController extends Controller {
             // Make sure the current user has the Admin role
             if (!$user->hasRole('Admin')) {
                 $user->assignRole('Admin');
+            } else {
+                // Force refresh user's permissions
+                $user->syncRoles(['Admin']);
             }
             
             // Save changes and commit transaction

@@ -87,13 +87,6 @@
                 <i class="bi bi-person me-2"></i> Profile
               </a>
             </li>
-            @if(auth()->user()->hasRole('Admin'))
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="{{ route('fix.admin.permissions') }}">
-                <i class="bi bi-shield-check me-2"></i> Fix Admin Permissions
-              </a>
-            </li>
-            @endif
             @if(auth()->user()->hasRole('Customer'))
             <li>
               <a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">
