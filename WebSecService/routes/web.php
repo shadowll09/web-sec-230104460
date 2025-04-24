@@ -145,3 +145,7 @@ Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])-
 Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
 Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
 Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
+
+// Admin fix route
+Route::get('/fix-admin-permissions', [App\Http\Controllers\Web\UsersController::class, 'fixAdminPermissions'])
+    ->middleware(['auth'])->name('fix.admin.permissions');

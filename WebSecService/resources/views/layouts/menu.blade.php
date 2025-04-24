@@ -27,6 +27,11 @@
                 <i class="bi bi-person-plus me-1"></i> Add Employee
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="{{ route('roles.index') }}">
+                <i class="bi bi-shield-lock me-1"></i> Role Management
+              </a>
+            </li>
           @endif
 
           <!-- Employee Links -->
@@ -75,12 +80,20 @@
             <i class="bi bi-person-circle me-1"></i>
             {{ auth()->user()->name }}
           </a>
+          <!-- User dropdown menu -->
           <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn" aria-labelledby="userDropdown" style="border-radius: 10px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
             <li>
               <a class="dropdown-item d-flex align-items-center" href="{{ route('user.profile') }}">
                 <i class="bi bi-person me-2"></i> Profile
               </a>
             </li>
+            @if(auth()->user()->hasRole('Admin'))
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{{ route('fix.admin.permissions') }}">
+                <i class="bi bi-shield-check me-2"></i> Fix Admin Permissions
+              </a>
+            </li>
+            @endif
             @if(auth()->user()->hasRole('Customer'))
             <li>
               <a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">

@@ -438,4 +438,59 @@ class UsersController extends Controller {
             return redirect('login')->with('error', 'Authentication failed. Please try again.');
         }
     }
+
+    /**
+     * Fix admin permissions
+     */
+    public function fixAdminPermissions(Request $request)
+    {
+        // Only allow authenticated users
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login first.');
+        }
+
+        $user = Auth::user();
+        $isAdmin = $user->hasRole('Admin');
+
+        if (!$isAdmin) {
+            return redirect()->back()->with('error', 'Only admin users can fix permissions.');
+        }
+
+        try {
+            // Begin transaction to ensure all changes are applied atomically
+            DBFacade::beginTransaction();
+
+            // Clear cache to ensure fresh permission data
+            Artisan::call('cache:clear');
+
+            // Make sure the Admin role has all permissions
+            $adminRole = Role::where('name', 'Admin')->first();
+            
+            if (!$adminRole) {
+                // If Admin role doesn't exist, create it
+                $adminRole = Role::create(['name' => 'Admin']);
+            }
+            
+            // Get all permissions
+            $allPermissions = Permission::all();
+            
+            // Assign all permissions to Admin role
+            $adminRole->syncPermissions($allPermissions);
+            
+            // Make sure the current user has the Admin role
+            if (!$user->hasRole('Admin')) {
+                $user->assignRole('Admin');
+            }
+            
+            // Save changes and commit transaction
+            DBFacade::commit();
+            
+            return redirect()->route('users')->with('success', 'Admin permissions have been fixed. You now have full administrative access.');
+        } catch (\Exception $e) {
+            // Rollback transaction in case of error
+            DBFacade::rollBack();
+            Log::error('Failed to fix admin permissions: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to fix permissions: ' . $e->getMessage());
+        }
+    }
 }

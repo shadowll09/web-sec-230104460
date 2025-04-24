@@ -10,6 +10,9 @@ class Feedback extends Model
 {
     use HasFactory;
 
+    // Explicitly define the table name to match the migration
+    protected $table = 'feedbacks';
+
     protected $fillable = [
         'order_id', 
         'user_id', 
