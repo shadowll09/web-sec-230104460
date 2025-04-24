@@ -81,6 +81,16 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('employees/store', [UserController::class, 'storeEmployee'])->name('store_employee');
 });
 
+// Role management routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/roles', [App\Http\Controllers\Web\RolesController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [App\Http\Controllers\Web\RolesController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [App\Http\Controllers\Web\RolesController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{role}/edit', [App\Http\Controllers\Web\RolesController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'destroy'])->name('roles.destroy');
+});
+
 // Basic pages
 Route::get('/', function () {
     return view('welcome');

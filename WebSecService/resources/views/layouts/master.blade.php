@@ -233,6 +233,15 @@
 <body>
     @include('layouts.menu')
 
+    <!-- Add this menu item to your navigation -->
+    @can('admin_users')
+    <li class="nav-item">
+        <a class="nav-link {{ Request::is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+            <i class="bi bi-person-badge"></i> Role Management
+        </a>
+    </li>
+    @endcan
+
     <div class="container">
         @if(session('success'))
             <div class="alert alert-success animate__animated animate__fadeIn" role="alert" id="successAlert">

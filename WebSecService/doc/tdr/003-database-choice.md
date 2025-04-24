@@ -10,7 +10,7 @@ The WebSecService application requires a persistent storage solution for user da
 
 ## Decision
 
-We will use **MySQL (or MariaDB)** as the primary relational database management system (RDBMS).
+We will use **MySQL** as the primary relational database management system (RDBMS).
 
 Laravel's Eloquent ORM will be used for interacting with the database, leveraging its features for migrations, seeding, and query building.
 
