@@ -41,9 +41,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
 Facade::setFacadeApplication($app);
 
 // Apply fallback configurations if database is not available
-$app->make('config');
-$app->make('events');
 try {
+    // Initialize the application before trying to access services
+    if (file_exists($app->bootstrapPath('app.php'))) {
+        require $app->bootstrapPath('app.php');
+    }
+    
     require_once __DIR__.'/../app/Helpers/ConfigFallbacks.php';
     App\Helpers\ConfigFallbacks::setup();
 } catch (\Exception $e) {
