@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\Feedback;
 
 class OrdersController extends Controller
 {
@@ -113,7 +115,7 @@ class OrdersController extends Controller
         if (!$product->updateStock($requestedQuantity)) {
             // This should no longer happen since we've validated quantities above,
             // but keep as a safeguard
-            \Log::error("Failed to update stock for product {$product->id} with quantity {$requestedQuantity}");
+            Log::error("Failed to update stock for product {$product->id} with quantity {$requestedQuantity}");
             if (isset($cart[$product->id])) {
                 $cart[$product->id]['quantity'] = $originalQuantity;
             }
@@ -122,7 +124,7 @@ class OrdersController extends Controller
         }
 
         // Log the successful stock update
-        \Log::info("Successfully updated stock for product {$product->id}. New stock level: {$product->stock_quantity}");
+        Log::info("Successfully updated stock for product {$product->id}. New stock level: {$product->stock_quantity}");
 
         Session::put('cart', $cart);
 
@@ -163,7 +165,7 @@ class OrdersController extends Controller
                 $product->updateStock(-$quantityToRestore);
 
                 // Log what we're doing
-                \Log::info("Restoring {$quantityToRestore} items to stock for product {$productId}");
+                Log::info("Restoring {$quantityToRestore} items to stock for product {$productId}");
             }
 
             // Remove from cart
@@ -470,7 +472,7 @@ class OrdersController extends Controller
         }
 
         // Log the operation for audit purposes
-        \Log::info("User {$request->user()->id} ({$request->user()->email}) added {$validated['amount']} credits to user {$user->id} ({$user->email})");
+        Log::info("User {$request->user()->id} ({$request->user()->email}) added {$validated['amount']} credits to user {$user->id} ({$user->email})");
 
         // Add credits using Database transaction to prevent race conditions
         DB::transaction(function () use ($user, $validated) {
@@ -487,5 +489,87 @@ class OrdersController extends Controller
 
         return redirect()->route('list_customers')
             ->with('success', "Successfully added {$validated['amount']} credits to {$user->name}'s account.");
+    }
+
+    /**
+     * Show the order cancellation form
+     */
+    public function showCancelForm(Order $order)
+    {
+        // Check if user is authorized to cancel the order
+        if (Auth::id() != $order->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Only allow cancellation for pending or processing orders
+        if (!in_array($order->status, ['pending', 'processing'])) {
+            return redirect()->back()->with('error', 'Only pending or processing orders can be cancelled.');
+        }
+
+        $reasons = Feedback::getReasons();
+        
+        return view('orders.cancel', compact('order', 'reasons'));
+    }
+
+    /**
+     * Process order cancellation
+     */
+    public function cancelOrder(Request $request, Order $order)
+    {
+        // Check if user is authorized to cancel the order
+        if (Auth::id() != $order->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Only allow cancellation for pending or processing orders
+        if (!in_array($order->status, ['pending', 'processing'])) {
+            return redirect()->back()->with('error', 'Only pending or processing orders can be cancelled.');
+        }
+
+        $request->validate([
+            'reason' => 'required|string',
+            'comments' => 'nullable|string|max:1000',
+        ]);
+
+        return DB::transaction(function() use ($order, $request) {
+            // Get all order items to restore stock
+            $orderItems = $order->items;
+            
+            // Restore product stock for each item
+            foreach ($orderItems as $item) {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    // Use negative quantity to increase stock
+                    $product->updateStock(-$item->quantity);
+                    
+                    // Log stock restore
+                    Log::info("Restored {$item->quantity} items to stock for product {$item->product_id} from cancelled order {$order->id}");
+                }
+            }
+            
+            // Refund user credits
+            $user = User::find($order->user_id);
+            if ($user) {
+                $user->addCredits($order->total_amount);
+                
+                // Log credit refund
+                Log::info("Refunded {$order->total_amount} credits to user {$user->id} for cancelled order {$order->id}");
+            }
+            
+            // Update order status to cancelled
+            $order->status = 'cancelled';
+            $order->save();
+            
+            // Create feedback record
+            Feedback::create([
+                'order_id' => $order->id,
+                'user_id' => Auth::id(),
+                'reason' => $request->reason,
+                'comments' => $request->comments,
+            ]);
+            
+            return redirect()->route('orders.show', $order->id)
+                ->with('success', 'Your order has been cancelled successfully and credits have been refunded to your account.');
+        });
     }
 }

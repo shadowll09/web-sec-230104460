@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Traits\HasRoles;
 
 
@@ -86,7 +87,7 @@ class User extends Authenticatable
         $this->save();
         
         // Log the transaction
-        \Log::info("Deducted {$amount} credits from user ID {$this->id}. New balance: {$this->credits}");
+        Log::info("Deducted {$amount} credits from user ID {$this->id}. New balance: {$this->credits}");
         
         return true;
     }
@@ -111,6 +112,6 @@ class User extends Authenticatable
         $this->save();
         
         // Log the transaction
-        \Log::info("Added {$amount} credits to user ID {$this->id}. New balance: {$this->credits}");
+        Log::info("Added {$amount} credits to user ID {$this->id}. New balance: {$this->credits}");
     }
 }

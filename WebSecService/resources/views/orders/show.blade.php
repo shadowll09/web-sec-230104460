@@ -9,12 +9,21 @@
     </div>
     @endif
 
+    <!-- Error Message -->
+    @if(session('error'))
+    <div class="alert alert-danger mb-4">
+        {{ session('error') }}
+    </div>
+    @endif
+
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h3 class="mb-0">Order #{{ $order->id }}</h3>
-                    <span class="badge bg-{{ $order->status == 'pending' ? 'warning' : ($order->status == 'delivered' ? 'success' : 'info') }}">
+                    <span class="badge bg-{{ $order->status == 'pending' ? 'warning' : 
+                                          ($order->status == 'delivered' ? 'success' : 
+                                          ($order->status == 'cancelled' ? 'danger' : 'info')) }}">
                         {{ ucfirst($order->status) }}
                     </span>
                 </div>
@@ -97,6 +106,13 @@
                     @endif
 
                     <div class="d-grid gap-2">
+                        <!-- Add cancel button for customers (if order is pending or processing) -->
+                        @if((Auth::id() == $order->user_id || Auth::user()->hasAnyRole(['Admin', 'Employee'])) && in_array($order->status, ['pending', 'processing']))
+                            <a href="{{ route('orders.cancel.form', $order->id) }}" class="btn btn-danger">
+                                <i class="bi bi-x-circle me-1"></i> Cancel Order
+                            </a>
+                        @endif
+                        
                         <a href="{{ route('orders.index') }}" class="btn btn-outline-secondary">Back to Orders</a>
                         <a href="{{ route('products_list') }}" class="btn btn-success">Continue Shopping</a>
                     </div>

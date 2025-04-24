@@ -136,3 +136,12 @@ Route::get('/transcript', function () {
 Route::get('/calculator', function () {
     return view('calculator');
 });
+
+// Order Cancellation Routes
+Route::get('/orders/{order}/cancel', [OrdersController::class, 'showCancelForm'])->name('orders.cancel.form');
+Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])->name('orders.cancel');
+
+// Feedback Routes
+Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
+Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
