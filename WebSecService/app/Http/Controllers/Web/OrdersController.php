@@ -65,6 +65,12 @@ class OrdersController extends Controller
      */
     public function addToCart(Request $request, Product $product)
     {
+        // Check if user has the Customer role
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('Customer')) {
+            abort(403, 'Only customers can add products to cart.');
+        }
+
         // Check if product is in stock (even if stock_quantity is 1, it's still available)
         if ($product->stock_quantity <= 0) {
             return redirect()->back()->with('error', 'Sorry, this product is out of stock.');

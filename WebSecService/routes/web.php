@@ -39,10 +39,12 @@ Route::post('users/save_password/{user}', [UsersController::class, 'savePassword
 
 // Product routes
 Route::get('products', [ProductsController::class, 'list'])->name('products_list');
-Route::middleware(['auth', 'role:Admin|Employee'])->group(function () {
-    Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
-    Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
-    Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
+Route::middleware(['auth'])->group(function () {
+    Route::middleware(['can:manage-products'])->group(function () {
+        Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
+        Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
+        Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
+    });
 });
 
 // Order routes
@@ -52,7 +54,7 @@ Route::get('orders', [OrdersController::class, 'index'])->name('orders.index');
 Route::get('orders/{order}', [OrdersController::class, 'show'])->name('orders.show');
 
 // Customer specific routes
-Route::middleware(['auth', 'role:Customer'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::post('cart/add/{product}', [OrdersController::class, 'addToCart'])->name('cart.add');
     Route::get('cart', [OrdersController::class, 'cart'])->name('cart');
     Route::delete('cart/remove/{productId}', [OrdersController::class, 'removeFromCart'])->name('cart.remove');
@@ -61,34 +63,40 @@ Route::middleware(['auth', 'role:Customer'])->group(function () {
 });
 
 // Admin/Employee routes
-Route::middleware(['auth', 'role:Admin|Employee'])->group(function () {
-    Route::patch('orders/{order}/status', [OrdersController::class, 'updateStatus'])->name('orders.update.status');
-    Route::get('customers/{user}/add-credits', [OrdersController::class, 'addCreditsForm'])->name('add_credits_form');
-    Route::post('customers/{user}/add-credits', [OrdersController::class, 'addCredits'])->name('add_credits');
+Route::middleware(['auth'])->group(function () {
+    Route::middleware(['can:manage-orders'])->group(function () {
+        Route::patch('orders/{order}/status', [OrdersController::class, 'updateStatus'])->name('orders.update.status');
+        Route::get('customers/{user}/add-credits', [OrdersController::class, 'addCreditsForm'])->name('add_credits_form');
+        Route::post('customers/{user}/add-credits', [OrdersController::class, 'addCredits'])->name('add_credits');
 
-    // Customer management
-    Route::get('customers', [UserController::class, 'customers'])->name('users.customers');
-    Route::get('customers/{user}/credits', [UserController::class, 'showAddCredits'])->name('users.credits.show');
-    Route::post('customers/{user}/credits', [UserController::class, 'addCredits'])->name('users.credits.add');
+        // Customer management
+        Route::get('customers', [UserController::class, 'customers'])->name('users.customers');
+        Route::get('customers/{user}/credits', [UserController::class, 'showAddCredits'])->name('users.credits.show');
+        Route::post('customers/{user}/credits', [UserController::class, 'addCredits'])->name('users.credits.add');
+    });
 });
 
 // User profile route
 Route::get('user/profile/{user?}', [UserController::class, 'profile'])->name('user.profile');
 
 // Admin routes
-Route::middleware(['auth', 'role:Admin'])->group(function () {
-    Route::get('employees/create', [UserController::class, 'createEmployee'])->name('create_employee');
-    Route::post('employees/store', [UserController::class, 'storeEmployee'])->name('store_employee');
+Route::middleware(['auth'])->group(function () {
+    Route::middleware(['can:manage-employees'])->group(function () {
+        Route::get('employees/create', [UserController::class, 'createEmployee'])->name('create_employee');
+        Route::post('employees/store', [UserController::class, 'storeEmployee'])->name('store_employee');
+    });
 });
 
 // Role management routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/roles', [App\Http\Controllers\Web\RolesController::class, 'index'])->name('roles.index');
-    Route::get('/roles/create', [App\Http\Controllers\Web\RolesController::class, 'create'])->name('roles.create');
-    Route::post('/roles', [App\Http\Controllers\Web\RolesController::class, 'store'])->name('roles.store');
-    Route::get('/roles/{role}/edit', [App\Http\Controllers\Web\RolesController::class, 'edit'])->name('roles.edit');
-    Route::put('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'update'])->name('roles.update');
-    Route::delete('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'destroy'])->name('roles.destroy');
+    Route::middleware(['can:manage-roles'])->group(function () {
+        Route::get('/roles', [App\Http\Controllers\Web\RolesController::class, 'index'])->name('roles.index');
+        Route::get('/roles/create', [App\Http\Controllers\Web\RolesController::class, 'create'])->name('roles.create');
+        Route::post('/roles', [App\Http\Controllers\Web\RolesController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{role}/edit', [App\Http\Controllers\Web\RolesController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'destroy'])->name('roles.destroy');
+    });
 });
 
 // Basic pages

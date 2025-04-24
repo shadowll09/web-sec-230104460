@@ -181,6 +181,7 @@ return [
     'aliases' => [
         'File' => Illuminate\Support\Facades\File::class,
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
+        'Auth' => Illuminate\Support\Facades\Auth::class,
     ],
 
 ];

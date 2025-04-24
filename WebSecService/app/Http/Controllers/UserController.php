@@ -10,6 +10,10 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    // If using “public function createEmployee(Role $role)” 
+    // make sure your route includes a {role} parameter 
+    // or remove the Role $role parameter if it’s not needed.
+
     /**
      * Display a listing of customers.
      */

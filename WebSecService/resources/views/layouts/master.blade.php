@@ -236,7 +236,7 @@
     <!-- Add this menu item to your navigation -->
     @can('admin_users')
     <li class="nav-item">
-        <a class="nav-link {{ Request::is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+        <a class="nav-link {{ \Illuminate\Support\Facades\Request::is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
             <i class="bi bi-person-badge"></i> Role Management
         </a>
     </li>
