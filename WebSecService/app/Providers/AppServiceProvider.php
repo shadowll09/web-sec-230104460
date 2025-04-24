@@ -3,14 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Filesystem\Filesystem;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
+    public function register()
     {
         // Register the Filesystem binding if not already bound
         if (!$this->app->bound('files')) {
@@ -33,11 +29,9 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
+    public function boot()
     {
-        //
+        // initialize config fallbacks once config service is available
+        \App\Helpers\ConfigFallbacks::setup();
     }
 }

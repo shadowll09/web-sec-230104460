@@ -13,37 +13,45 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
-        $admin = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-        ]);
+        // Create admin user if not exists
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+            ]
+        );
         $admin->assignRole('Admin');
 
-        // Create employee user
-        $employee = User::create([
-            'name' => 'Employee User',
-            'email' => 'employee@example.com',
-            'password' => Hash::make('password'),
-        ]);
+        // Create employee user if not exists
+        $employee = User::firstOrCreate(
+            ['email' => 'employee@example.com'],
+            [
+                'name' => 'Employee User',
+                'password' => Hash::make('password'),
+            ]
+        );
         $employee->assignRole('Employee');
 
-        // Create customer users
-        $customer1 = User::create([
-            'name' => 'Customer One',
-            'email' => 'customer1@example.com',
-            'password' => Hash::make('password'),
-            'credits' => 5000,
-        ]);
+        // Create customer users if not exists
+        $customer1 = User::firstOrCreate(
+            ['email' => 'customer1@example.com'],
+            [
+                'name' => 'Customer One',
+                'password' => Hash::make('password'),
+                'credits' => 5000,
+            ]
+        );
         $customer1->assignRole('Customer');
 
-        $customer2 = User::create([
-            'name' => 'Customer Two',
-            'email' => 'customer2@example.com',
-            'password' => Hash::make('password'),
-            'credits' => 8000,
-        ]);
+        $customer2 = User::firstOrCreate(
+            ['email' => 'customer2@example.com'],
+            [
+                'name' => 'Customer Two',
+                'password' => Hash::make('password'),
+                'credits' => 8000,
+            ]
+        );
         $customer2->assignRole('Customer');
 
         // Seed products

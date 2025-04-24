@@ -30,7 +30,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'rate.login' => \App\Http\Middleware\RateLimitLogin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
@@ -39,18 +41,5 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
 // Set Facade application instance
 Facade::setFacadeApplication($app);
-
-// Apply fallback configurations if database is not available
-try {
-    // Initialize the application before trying to access services
-    if (file_exists($app->bootstrapPath('app.php'))) {
-        require $app->bootstrapPath('app.php');
-    }
-    
-    require_once __DIR__.'/../app/Helpers/ConfigFallbacks.php';
-    App\Helpers\ConfigFallbacks::setup();
-} catch (\Exception $e) {
-    // If even the fallback fails, continue silently
-}
 
 return $app;
