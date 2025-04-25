@@ -36,6 +36,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+            'employee.feedback' => \App\Http\Middleware\EmployeeFeedbackNotifier::class,
         ]);
         
         // Register middleware aliases from config

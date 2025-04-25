@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\ProductsController;
 use App\Http\Controllers\Web\UsersController;
 use App\Http\Controllers\Web\OrdersController;
+use App\Http\Controllers\Web\FeedbackController;
 use App\Http\Controllers\UserController;
 
 // Auth routes
