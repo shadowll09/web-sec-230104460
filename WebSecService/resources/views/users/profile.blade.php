@@ -132,86 +132,47 @@
 
 @push('scripts')
 <script>
+    // The main theme system is now handled by the centralized theme manager in master.blade.php
+    // This script just adds some additional preview functionality for the profile page
     document.addEventListener('DOMContentLoaded', function() {
-        // Set up dark mode toggle switch
-        const darkModeSwitch = document.getElementById('darkModeSwitch');
+        // Preview buttons should update instantly to show theme changes
+        const previewPrimaryBtn = document.querySelector('.d-grid .btn-primary');
+        const previewGradientBtn = document.querySelector('.d-grid .btn-gradient');
+        const previewAlert = document.querySelector('.alert-themed');
         
-        // Check current theme setting
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        darkModeSwitch.checked = isDarkMode;
-        
-        // Set up dark mode toggle
-        darkModeSwitch.addEventListener('change', function() {
-            if (this.checked) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
+        // Preview theme changes when clicking theme options
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // The main theme manager will handle the actual theme change
+                // This just provides immediate visual feedback in the preview section
+                const themeName = this.getAttribute('data-theme');
                 
-                // Update the main toggle icon if it exists
-                const darkModeToggle = document.getElementById('darkModeToggle');
-                if (darkModeToggle) {
-                    const icon = darkModeToggle.querySelector('i');
-                    if (icon) icon.classList.replace('bi-sun', 'bi-moon-stars');
+                // Update preview elements with appropriate colors based on theme
+                let primaryColor = '#4a6cf7'; // Default blue
+                let gradientStart = '#4a6cf7';
+                let gradientEnd = '#6384ff';
+                
+                if (themeName === 'energy') {
+                    primaryColor = '#e63946';
+                    gradientStart = '#e63946';
+                    gradientEnd = '#ff6b6b';
+                } else if (themeName === 'calm') {
+                    primaryColor = '#2a9d8f';
+                    gradientStart = '#2a9d8f';
+                    gradientEnd = '#57cc99';
+                } else if (themeName === 'ocean') {
+                    primaryColor = '#0077b6';
+                    gradientStart = '#0077b6';
+                    gradientEnd = '#00b4d8';
                 }
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
                 
-                // Update the main toggle icon if it exists
-                const darkModeToggle = document.getElementById('darkModeToggle');
-                if (darkModeToggle) {
-                    const icon = darkModeToggle.querySelector('i');
-                    if (icon) icon.classList.replace('bi-moon-stars', 'bi-sun');
-                }
-            }
-        });
-        
-        // Set up theme buttons
-        const themeButtons = document.querySelectorAll('.theme-option');
-        const savedColorTheme = localStorage.getItem('colorTheme') || 'default';
-        
-        // Set active class for current theme
-        themeButtons.forEach(btn => {
-            const themeName = btn.getAttribute('data-theme');
-            if (themeName === savedColorTheme) {
-                btn.classList.add('active');
-            }
-            
-            btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                themeButtons.forEach(b => b.classList.remove('active'));
-                
-                // Add active class to clicked button
-                this.classList.add('active');
+                // Update preview elements
+                previewPrimaryBtn.style.backgroundColor = primaryColor;
+                previewPrimaryBtn.style.borderColor = primaryColor;
+                previewGradientBtn.style.backgroundImage = `linear-gradient(to right, ${gradientStart}, ${gradientEnd})`;
+                previewAlert.style.backgroundColor = primaryColor;
             });
-        });
-        
-        // Handle the Apply Theme button
-        document.querySelector('.btn-gradient').addEventListener('click', function() {
-            const activeTheme = document.querySelector('.theme-option.active');
-            if (activeTheme) {
-                const themeName = activeTheme.getAttribute('data-theme');
-                
-                if (themeName === 'default') {
-                    document.documentElement.removeAttribute('data-color-theme');
-                    localStorage.removeItem('colorTheme');
-                } else {
-                    document.documentElement.setAttribute('data-color-theme', themeName);
-                    localStorage.setItem('colorTheme', themeName);
-                }
-                
-                // Show success message
-                const alert = document.createElement('div');
-                alert.className = 'alert alert-success animate__animated animate__fadeIn mt-3';
-                alert.textContent = 'Theme applied successfully!';
-                this.parentNode.appendChild(alert);
-                
-                // Remove alert after 3 seconds
-                setTimeout(() => {
-                    alert.classList.remove('animate__fadeIn');
-                    alert.classList.add('animate__fadeOut');
-                    setTimeout(() => alert.remove(), 500);
-                }, 3000);
-            }
         });
     });
 </script>

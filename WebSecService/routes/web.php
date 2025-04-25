@@ -125,6 +125,10 @@ Route::get('/test', function () {
     return view('test');
 });
 
+Route::get('/test-theme', function () {
+    return view('test-theme');
+});
+
 Route::get('/transcript', function () {
     $transcript = [
         'Mathematics' => 'A',

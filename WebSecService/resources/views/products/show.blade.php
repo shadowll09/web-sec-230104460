@@ -49,9 +49,8 @@
                     </div>
                     
                     @if($product->in_stock)
-                        <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form">
+                        <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
                             @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <div class="row g-3 align-items-center mb-3">
                                 <div class="col-auto">
                                     <label for="quantity" class="col-form-label">Quantity:</label>
