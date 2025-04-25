@@ -1,92 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Modern Store - @yield('title')</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>@yield('title') - Modern Store</title>
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS -->
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
-
+    
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-    <!-- Animate.css for animations -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha512-c42qTSw/wPZ3/5LBzD+Bw5f7bSF2oxou6wEb+I/lqeaKV5FDIfMvvRp772y4jcJLKuGUOpbJMdg/BTl50fJYAw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- AOS CSS -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
-    <!-- Custom styles -->
+    
     <style>
         :root {
-            --primary-color: #5c6bc0;
-            --secondary-color: #ff5722;
-            --dark-color: #212121;
-            --light-color: #f5f5f5;
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
+            --primary-color: #4a6cf7;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --body-bg: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --scrollbar-track: #f1f1f1;
+            --scrollbar-thumb: #4a6cf7;
+        }
+
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --primary-color: #5372fb;
+            --secondary-color: #828a91;
+            --success-color: #2fb84d;
+            --danger-color: #e34757;
+            --warning-color: #ffd119;
+            --info-color: #1fb6ca;
+            --light-color: #3c4349;
+            --dark-color: #f8f9fa;
+            --body-bg: #1a1d20;
+            --text-color: #f8f9fa;
+            --border-color: #495057;
+            --card-bg: #2a2e33;
+            --scrollbar-track: #2a2e33;
+            --scrollbar-thumb: #5372fb;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            transition: all 0.3s ease;
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .navbar {
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            background-color: white !important;
-        }
-
-        .navbar-brand {
-            font-weight: 600;
-            color: var(--primary-color) !important;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--primary-color) !important;
-            transform: translateY(-2px);
-        }
-
+        /* Cards */
         .card {
-            border: none;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .card-header {
-            border-bottom: none;
-            padding: 1.5rem;
-            font-weight: 600;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
+        /* Buttons */
         .btn {
-            border-radius: 5px;
-            font-weight: 500;
-            padding: 0.5rem 1.5rem;
-            transition: all 0.3s ease;
+            border-radius: 6px;
+            font-weight: 600;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.2s;
         }
 
         .btn-primary {
@@ -95,118 +98,116 @@
         }
 
         .btn-primary:hover {
-            background-color: #3f51b5;
-            border-color: #3f51b5;
+            background-color: var(--primary-color);
+            filter: brightness(110%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(63, 81, 181, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .btn-success {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
+        /* Navbar */
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: var(--card-bg) !important;
+            transition: background-color 0.3s;
         }
 
-        .btn-success:hover {
-            background-color: #43a047;
-            border-color: #43a047;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .alert {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        /* Animation classes */
-        .fade-out {
-            animation: fadeOut 0.5s forwards;
-        }
-
-        .slide-up {
-            animation: slideUp 0.3s forwards;
-        }
-
-        .scale-in {
-            animation: scaleIn 0.3s forwards;
-        }
-
-        /* Animation keyframes */
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(0); opacity: 1; }
-            to { transform: translateY(-20px); opacity: 0; }
-        }
-
-        @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        /* Custom table styling */
-        .table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .table thead th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f1f3f5;
-            transform: scale(1.01);
-        }
-
-        /* Badge styling */
-        .badge {
-            padding: 0.5em 1em;
-            font-weight: 500;
-            border-radius: 30px;
-        }
-
-        /* Form control styling */
-        .form-control {
+        .navbar-light .navbar-nav .nav-link {
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
             border-radius: 5px;
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
+        }
+
+        .navbar-light .navbar-brand {
+            color: var(--text-color);
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Form controls */
+        .form-control {
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s, color 0.3s;
         }
 
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(92, 107, 192, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
         }
 
-        /* Toast notification styling */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            background-color: white;
+        /* Tables */
+        .table {
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        /* Alerts */
+        .alert {
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border-left: 4px solid var(--primary-color);
-            padding: 1rem;
-            animation: slideIn 0.3s forwards;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        /* Animation utility classes */
+        .scale-in {
+            transform: scale(1.03);
+        }
+
+        /* Dropdown menus */
+        .dropdown-menu {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .dropdown-item {
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Notification panel styles */
+        .notification-panel {
+            margin-bottom: 20px;
+        }
+
+        .notification-dropdown {
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .notification-item {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .notification-content {
+            flex: 1;
         }
 
         /* Container padding */
@@ -221,12 +222,40 @@
         }
 
         ::-webkit-scrollbar-track {
-            background-color: #f1f1f1;
+            background-color: var(--scrollbar-track);
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: var(--primary-color);
+            background-color: var(--scrollbar-thumb);
             border-radius: 10px;
+        }
+
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: translateY(-5px);
+        }
+
+        .dark-mode-toggle i {
+            font-size: 1.5rem;
+            color: var(--text-color);
         }
     </style>
 </head>
@@ -341,6 +370,11 @@
         </div>
     </div>
 
+    <!-- Dark Mode Toggle Button -->
+    <div class="dark-mode-toggle animate__animated animate__fadeIn" id="darkModeToggle">
+        <i class="bi bi-sun"></i>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
 
@@ -363,6 +397,35 @@
                 element.remove();
             });
         }
+
+        // Dark mode functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const icon = darkModeToggle.querySelector('i');
+            
+            // Check for saved theme preference or use preferred color scheme
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Set initial theme
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                icon.classList.replace('bi-sun', 'bi-moon-stars');
+            }
+            
+            // Toggle theme on click
+            darkModeToggle.addEventListener('click', function() {
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                    icon.classList.replace('bi-moon-stars', 'bi-sun');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    icon.classList.replace('bi-sun', 'bi-moon-stars');
+                }
+            });
+        });
     </script>
 
     <!-- Custom script for cart item animations -->
