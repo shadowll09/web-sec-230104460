@@ -131,7 +131,10 @@ class ProductsController extends Controller {
 	/**
 	 * Show a single product's details
 	 */
-	public function show(Product $product) {
+	public function show(Request $request, Product $product) {
+		// Add product view logic here
+		// Since route model binding is used, the product is automatically fetched
+		
 		return view('products.show', compact('product'));
 	}
 }

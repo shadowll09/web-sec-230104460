@@ -41,6 +41,7 @@ Route::post('users/save_password/{user}', [UsersController::class, 'savePassword
 
 // Product routes
 Route::get('products', [ProductsController::class, 'list'])->name('products_list');
+Route::get('products/{product}', [ProductsController::class, 'show'])->name('products.show');
 Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:Admin|Employee'])->group(function () {
         Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
