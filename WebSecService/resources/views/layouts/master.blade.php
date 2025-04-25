@@ -28,6 +28,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <style>
+        /* Base theme (Light) */
         :root {
             --primary-color: #4a6cf7;
             --secondary-color: #6c757d;
@@ -43,11 +44,18 @@
             --card-bg: #ffffff;
             --scrollbar-track: #f1f1f1;
             --scrollbar-thumb: #4a6cf7;
+            
+            /* Theme specific accent colors */
+            --theme-primary: #4a6cf7;
+            --theme-secondary: #6c757d;
+            --theme-accent: #5c7cfa;
+            --theme-gradient-start: #4a6cf7;
+            --theme-gradient-end: #6384ff;
         }
 
         /* Dark mode variables */
         [data-theme="dark"] {
-            --primary-color: #5372fb;
+            --primary-color: var(--theme-primary);
             --secondary-color: #828a91;
             --success-color: #2fb84d;
             --danger-color: #e34757;
@@ -60,7 +68,34 @@
             --border-color: #495057;
             --card-bg: #2a2e33;
             --scrollbar-track: #2a2e33;
-            --scrollbar-thumb: #5372fb;
+            --scrollbar-thumb: var(--theme-primary);
+        }
+        
+        /* Energy Theme (Red) */
+        [data-color-theme="energy"] {
+            --theme-primary: #e63946;
+            --theme-secondary: #ff6b6b;
+            --theme-accent: #ff9999;
+            --theme-gradient-start: #e63946;
+            --theme-gradient-end: #ff6b6b;
+        }
+        
+        /* Calm Theme (Green) */
+        [data-color-theme="calm"] {
+            --theme-primary: #2a9d8f;
+            --theme-secondary: #57cc99;
+            --theme-accent: #80ed99;
+            --theme-gradient-start: #2a9d8f;
+            --theme-gradient-end: #57cc99;
+        }
+        
+        /* Ocean Theme (Blue) */
+        [data-color-theme="ocean"] {
+            --theme-primary: #0077b6;
+            --theme-secondary: #00b4d8;
+            --theme-accent: #90e0ef;
+            --theme-gradient-start: #0077b6;
+            --theme-gradient-end: #00b4d8;
         }
 
         body {
@@ -93,15 +128,46 @@
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--theme-primary);
+            border-color: var(--theme-primary);
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-color);
+            background-color: var(--theme-primary);
             filter: brightness(110%);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Gradient buttons for energy */
+        .btn-gradient {
+            background-image: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end));
+            border: none;
+            color: white;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .btn-gradient:hover {
+            color: white;
+        }
+        
+        .btn-gradient:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(to right, var(--theme-gradient-end), var(--theme-gradient-start));
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.35s ease;
+        }
+        
+        .btn-gradient:hover:before {
+            opacity: 1;
         }
 
         /* Navbar */
@@ -140,7 +206,7 @@
         }
 
         .form-control:focus {
-            border-color: var(--primary-color);
+            border-color: var(--theme-primary);
             box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
         }
 
@@ -177,6 +243,16 @@
         .dropdown-item:hover {
             background-color: rgba(0, 0, 0, 0.05);
         }
+        
+        /* Badge styling */
+        .badge {
+            transition: background-color 0.3s;
+        }
+        
+        .badge-themed {
+            background-color: var(--theme-primary);
+            color: white;
+        }
 
         /* Notification panel styles */
         .notification-panel {
@@ -209,6 +285,50 @@
         .notification-content {
             flex: 1;
         }
+        
+        /* Theme selector */
+        .theme-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .theme-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .theme-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .theme-option.active {
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px var(--theme-primary);
+        }
+        
+        .theme-option.energy {
+            background: linear-gradient(135deg, #e63946 0%, #ff6b6b 100%);
+        }
+        
+        .theme-option.calm {
+            background: linear-gradient(135deg, #2a9d8f 0%, #57cc99 100%);
+        }
+        
+        .theme-option.ocean {
+            background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+        }
+        
+        .theme-option.default {
+            background: linear-gradient(135deg, #4a6cf7 0%, #6384ff 100%);
+        }
 
         /* Container padding */
         .container {
@@ -226,7 +346,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: var(--scrollbar-thumb);
+            background-color: var(--theme-primary);
             border-radius: 10px;
         }
 
@@ -413,6 +533,12 @@
                 icon.classList.replace('bi-sun', 'bi-moon-stars');
             }
             
+            // Get color theme preference
+            const savedColorTheme = localStorage.getItem('colorTheme');
+            if (savedColorTheme) {
+                document.documentElement.setAttribute('data-color-theme', savedColorTheme);
+            }
+            
             // Toggle theme on click
             darkModeToggle.addEventListener('click', function() {
                 if (document.documentElement.getAttribute('data-theme') === 'dark') {
@@ -424,6 +550,36 @@
                     localStorage.setItem('theme', 'dark');
                     icon.classList.replace('bi-sun', 'bi-moon-stars');
                 }
+            });
+            
+            // Set up color theme switchers if they exist
+            const themeOptions = document.querySelectorAll('.theme-option');
+            themeOptions.forEach(option => {
+                // Check if this option is the active one
+                const themeName = option.getAttribute('data-theme');
+                if (themeName === savedColorTheme) {
+                    option.classList.add('active');
+                }
+                
+                option.addEventListener('click', function() {
+                    const themeName = this.getAttribute('data-theme');
+                    
+                    // Remove active class from all options
+                    themeOptions.forEach(opt => opt.classList.remove('active'));
+                    
+                    // Add active class to clicked option
+                    this.classList.add('active');
+                    
+                    if (themeName === 'default') {
+                        // Remove color theme attribute
+                        document.documentElement.removeAttribute('data-color-theme');
+                        localStorage.removeItem('colorTheme');
+                    } else {
+                        // Set new color theme
+                        document.documentElement.setAttribute('data-color-theme', themeName);
+                        localStorage.setItem('colorTheme', themeName);
+                    }
+                });
             });
         });
     </script>
