@@ -30,6 +30,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
     )
     ->withMiddleware(function ($middleware) {
+        // Directly register the RateLimitLogin middleware
+        $middleware->alias([
+            'rate.login' => \App\Http\Middleware\RateLimitLogin::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+        ]);
+        
         // Register middleware aliases from config
         if (file_exists($path = config_path('middleware.php'))) {
             $aliases = require $path;
