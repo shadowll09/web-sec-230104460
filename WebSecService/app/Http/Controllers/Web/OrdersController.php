@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Feedback;
+use App\Notifications\OrderCancelled;
+use Carbon\Carbon;
 
 class OrdersController extends Controller
 {
@@ -33,10 +35,29 @@ class OrdersController extends Controller
 
         $user = Auth::user();
 
-        // If employee or admin, show all orders
+        // If employee or admin, show all orders and feedback analytics
         if ($user->hasAnyRole(['Admin', 'Employee'])) {
             $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
-            return view('orders.index', compact('orders'));
+            
+            // Feedback analytics data
+            $recentFeedbackCount = Feedback::where('created_at', '>=', Carbon::now()->subDays(7))->count();
+            $unresolvedFeedbackCount = Feedback::where('resolved', false)->count();
+            $recentCancellationsCount = Order::where('status', 'cancelled')
+                ->where('updated_at', '>=', Carbon::now()->subDays(7))
+                ->count();
+            
+            // Calculate response rate
+            $totalFeedback = Feedback::count();
+            $resolvedFeedback = Feedback::where('resolved', true)->count();
+            $responseRate = $totalFeedback > 0 ? round(($resolvedFeedback / $totalFeedback) * 100) . '%' : '0%';
+            
+            return view('orders.index', compact(
+                'orders', 
+                'recentFeedbackCount', 
+                'unresolvedFeedbackCount', 
+                'recentCancellationsCount',
+                'responseRate'
+            ));
         }
 
         // For customers, only show their orders
@@ -58,7 +79,8 @@ class OrdersController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $order->load('items.product', 'user');
+        // Load order with related data including feedback
+        $order->load('items.product', 'user', 'feedback');
         return view('orders.show', compact('order'));
     }
 
@@ -561,13 +583,24 @@ class OrdersController extends Controller
             $order->save();
             
             // Create feedback record
-            Feedback::create([
+            $feedback = Feedback::create([
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
                 'reason' => $request->reason,
                 'comments' => $request->comments,
             ]);
-            
+
+            // Send notification to employees and admins
+            $adminsAndEmployees = User::role(['Admin', 'Employee'])
+                ->whereHas('permissions', function($q) {
+                    $q->whereIn('name', ['receive_cancellation_notifications']);
+                })
+                ->get();
+
+            foreach ($adminsAndEmployees as $staff) {
+                $staff->notify(new OrderCancelled($order, $request->reason));
+            }
+
             return redirect()->route('orders.show', $order->id)
                 ->with('success', 'Your order has been cancelled successfully and credits have been refunded to your account.');
         });

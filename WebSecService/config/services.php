@@ -34,6 +34,18 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'notifications' => [
+        'feedback_analysis' => [
+            'enabled' => env('FEEDBACK_ANALYSIS_ENABLED', true),
+            'threshold_score' => env('FEEDBACK_ANALYSIS_THRESHOLD', 3),
+            'alert_on_negative' => env('FEEDBACK_ALERT_ON_NEGATIVE', true),
+        ],
+        'cancellation_alerts' => [
+            'enabled' => env('CANCELLATION_ALERTS_ENABLED', true),
+            'threshold_percentage' => env('CANCELLATION_THRESHOLD', 5), // Alert if cancellation rate exceeds 5%
+        ],
+    ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

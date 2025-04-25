@@ -142,9 +142,17 @@ Route::get('/orders/{order}/cancel', [OrdersController::class, 'showCancelForm']
 Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])->name('orders.cancel');
 
 // Feedback Routes
-Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
-Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
-Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
+Route::middleware(['auth', 'employee.feedback'])->group(function () {
+    Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+    Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
+    Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
+});
+
+// Add notification route
+Route::get('/notifications/mark-as-read', function() {
+    auth()->user()->unreadNotifications->markAsRead();
+    return redirect()->back()->with('success', 'All notifications marked as read');
+})->middleware(['auth'])->name('notifications.markAsRead');
 
 // Admin fix route
 Route::get('/fix-admin-permissions', [App\Http\Controllers\Web\UsersController::class, 'fixAdminPermissions'])

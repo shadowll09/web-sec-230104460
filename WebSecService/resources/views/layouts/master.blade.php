@@ -279,6 +279,63 @@
             </script>
         @endif
 
+        <!-- Notifications Area - Add this where appropriate in your layout -->
+        @auth
+            @if(Auth::user()->hasAnyRole(['Admin', 'Employee']) && isset($feedbackNotifications) && $unreadFeedbackCount > 0)
+            <div class="notification-panel">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell"></i> Notifications
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadFeedbackCount }}
+                            <span class="visually-hidden">unread notifications</span>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
+                        <li><h6 class="dropdown-header">Customer Feedback & Cancellations</h6></li>
+                        
+                        @foreach($feedbackNotifications as $notification)
+                            <li>
+                                <a class="dropdown-item" href="{{ $notification->data['url'] }}">
+                                    @if($notification->type == 'App\Notifications\OrderCancelled')
+                                        <div class="notification-item">
+                                            <div class="notification-icon bg-danger text-white">
+                                                <i class="bi bi-x-circle"></i>
+                                            </div>
+                                            <div class="notification-content">
+                                                <p class="mb-0"><strong>Order #{{ $notification->data['order_id'] }} cancelled</strong></p>
+                                                <p class="small text-muted mb-0">{{ $notification->data['customer_name'] }} - {{ $notification->data['reason'] }}</p>
+                                                <p class="small text-muted">{{ \Carbon\Carbon::parse($notification->data['cancelled_at'])->diffForHumans() }}</p>
+                                            </div>
+                                        </div>
+                                    @elseif($notification->type == 'App\Notifications\NewFeedback')
+                                        <div class="notification-item">
+                                            <div class="notification-icon bg-warning text-dark">
+                                                <i class="bi bi-chat-left-text"></i>
+                                            </div>
+                                            <div class="notification-content">
+                                                <p class="mb-0"><strong>New feedback received</strong></p>
+                                                <p class="small text-muted mb-0">{{ $notification->data['customer_name'] }} - Order #{{ $notification->data['order_id'] }}</p>
+                                                <p class="small text-muted">{{ \Carbon\Carbon::parse($notification->data['submitted_at'])->diffForHumans() }}</p>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="text-center">
+                            <a class="dropdown-item" href="{{ route('feedback.index') }}">
+                                View all feedback
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            @endif
+        @endauth
+
         <div data-aos="fade-up" data-aos-duration="800">
             @yield('content')
         </div>

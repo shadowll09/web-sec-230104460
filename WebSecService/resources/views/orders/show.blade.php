@@ -27,6 +27,20 @@
                         {{ ucfirst($order->status) }}
                     </span>
                 </div>
+
+                <!-- Customer Feedback Alert -->
+                @if(isset($order->feedback) && $order->feedback->count() > 0)
+                <div class="alert alert-info border-left border-info m-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-chat-quote me-2 fs-4"></i>
+                        <div>
+                            <strong>Customer Feedback Available</strong>
+                            <p class="mb-0 small">This order has {{ $order->feedback->count() }} feedback submission(s)</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -79,6 +93,41 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Customer Feedback Section -->
+            @if(isset($order->feedback) && $order->feedback->count() > 0)
+            <div class="card mb-4 animate__animated animate__fadeIn">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Customer Feedback</h3>
+                </div>
+                <div class="card-body">
+                    @foreach($order->feedback as $feedback)
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <h5 class="mb-1">{{ $feedback->reason }}</h5>
+                            <span class="text-muted small">{{ $feedback->created_at->format('M d, Y g:i A') }}</span>
+                        </div>
+                        @if($feedback->comments)
+                        <p class="mb-2">{{ $feedback->comments }}</p>
+                        @endif
+                        
+                        <!-- Feedback Status -->
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="badge bg-{{ $feedback->resolved ? 'success' : 'warning' }}">
+                                {{ $feedback->resolved ? 'Resolved' : 'Pending' }}
+                            </span>
+                            
+                            @if(Auth::user()->hasAnyRole(['Admin', 'Employee']) && !$feedback->resolved)
+                            <a href="{{ route('feedback.show', $feedback->id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-reply"></i> Respond
+                            </a>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
 
         <div class="col-md-4">

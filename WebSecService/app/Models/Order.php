@@ -11,11 +11,6 @@ class Order extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'user_id',
         'total_amount',
@@ -25,7 +20,7 @@ class Order extends Model
     ];
 
     /**
-     * Get the user who placed the order.
+     * Get the user that owns the order.
      */
     public function user(): BelongsTo
     {
@@ -38,5 +33,29 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+    
+    /**
+     * Get the feedback for the order.
+     */
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(Feedback::class);
+    }
+    
+    /**
+     * Get the latest feedback for the order.
+     */
+    public function latestFeedback()
+    {
+        return $this->hasOne(Feedback::class)->latest();
+    }
+    
+    /**
+     * Check if order has any unresolved feedback.
+     */
+    public function hasUnresolvedFeedback(): bool
+    {
+        return $this->feedback()->where('resolved', false)->exists();
     }
 }
