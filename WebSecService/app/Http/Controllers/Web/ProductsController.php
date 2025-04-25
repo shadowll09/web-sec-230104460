@@ -68,6 +68,8 @@ class ProductsController extends Controller {
             'price' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'stock_quantity' => ['required', 'integer', 'min:0', 'max:100000'],
             'photo' => ['nullable', 'string', 'max:255'],
+            'main_photo' => ['nullable', 'image', 'max:2048'], // 2MB max size
+            'additional_photos.*' => ['nullable', 'image', 'max:2048'], // Each additional photo 2MB max
         ]);
 
         $product = $product ?? new Product();
@@ -80,8 +82,36 @@ class ProductsController extends Controller {
         $product->price = $request->input('price');
         $product->stock_quantity = $request->input('stock_quantity');
         
+        // For backward compatibility
         if ($request->has('photo')) {
             $product->photo = $request->input('photo');
+        }
+        
+        // Handle main photo upload
+        if ($request->hasFile('main_photo') && $request->file('main_photo')->isValid()) {
+            $mainPhotoName = time() . '_' . $request->file('main_photo')->getClientOriginalName();
+            $request->file('main_photo')->storeAs('public/products', $mainPhotoName);
+            $product->main_photo = $mainPhotoName;
+        }
+        
+        // Handle additional photos
+        if ($request->hasFile('additional_photos')) {
+            $additionalPhotos = [];
+            
+            foreach ($request->file('additional_photos') as $photo) {
+                if ($photo->isValid()) {
+                    $photoName = time() . '_' . uniqid() . '_' . $photo->getClientOriginalName();
+                    $photo->storeAs('public/products', $photoName);
+                    $additionalPhotos[] = $photoName;
+                }
+            }
+            
+            // If we have existing photos, merge with new ones
+            if ($product->additional_photos && is_array($product->additional_photos)) {
+                $additionalPhotos = array_merge($product->additional_photos, $additionalPhotos);
+            }
+            
+            $product->additional_photos = $additionalPhotos;
         }
         
         $product->save();

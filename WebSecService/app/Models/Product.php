@@ -21,6 +21,19 @@ class Product extends Model  {
         'price',
         'stock_quantity',
         'photo',
+        'main_photo',
+        'additional_photos',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'additional_photos' => 'array',
+        'price' => 'float',
+        'stock_quantity' => 'integer',
     ];
 
     /**
@@ -59,5 +72,50 @@ class Product extends Model  {
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the main photo URL
+     */
+    public function getMainPhotoUrl()
+    {
+        if ($this->main_photo) {
+            return asset('storage/products/' . $this->main_photo);
+        } elseif ($this->photo) {
+            // Fallback to old photo field for backward compatibility
+            return asset('storage/products/' . $this->photo);
+        }
+        
+        // Default image if none set
+        return asset('images/product-placeholder.jpg');
+    }
+
+    /**
+     * Get all photo URLs (main and additional)
+     */
+    public function getAllPhotoUrls()
+    {
+        $photos = [];
+        
+        // Add main photo
+        if ($this->main_photo) {
+            $photos[] = asset('storage/products/' . $this->main_photo);
+        } elseif ($this->photo) {
+            $photos[] = asset('storage/products/' . $this->photo);
+        }
+        
+        // Add additional photos
+        if ($this->additional_photos && is_array($this->additional_photos)) {
+            foreach ($this->additional_photos as $photo) {
+                $photos[] = asset('storage/products/' . $photo);
+            }
+        }
+        
+        // If no photos, return default
+        if (empty($photos)) {
+            $photos[] = asset('images/product-placeholder.jpg');
+        }
+        
+        return $photos;
     }
 }
