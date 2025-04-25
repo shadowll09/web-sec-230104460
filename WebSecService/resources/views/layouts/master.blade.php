@@ -222,6 +222,12 @@
             border: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
+        
+        .alert-themed {
+            background-color: var(--theme-primary);
+            color: white;
+            border-left: 4px solid var(--theme-accent);
+        }
 
         /* Animation utility classes */
         .scale-in {
