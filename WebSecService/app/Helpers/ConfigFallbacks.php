@@ -109,8 +109,10 @@ class ConfigFallbacks
         // Set queue driver to sync instead of database
         Config::set('queue.default', 'sync');
         
-        // Disable features that might depend on database
-        Config::set('auth.guards.web.driver', 'array');
+        // Configure auth to not depend on database
+        Config::set('auth.providers.users.driver', 'eloquent');
+        Config::set('auth.providers.users.model', 'App\Models\User');
+        Config::set('auth.guards.web.driver', 'session');
         
         // Disable database-dependent features
         Config::set('database.connections.mysql.enabled', false);

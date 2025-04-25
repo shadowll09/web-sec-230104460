@@ -127,7 +127,7 @@ class UsersController extends Controller {
         return redirect('/');
     }
 
-    public function profile(Request $request, User $user = null) {
+    public function profile(Request $request, ?User $user = null) {
 
         $user = $user??auth()->user();
         if(auth()->id()!=$user->id) {
@@ -147,7 +147,7 @@ class UsersController extends Controller {
         return view('users.profile', compact('user', 'permissions'));
     }
 
-    public function edit(Request $request, User $user = null) {
+    public function edit(Request $request, ?User $user = null) {
         $user = $user ?? auth()->user();
         
         // Fixed permission check - using edit_users instead of show_users
@@ -270,7 +270,7 @@ class UsersController extends Controller {
         return redirect(route('profile', ['user'=>$user->id]))->with('success', 'Password updated successfully');
     }
 
-    public function editPassword(Request $request, User $user = null) {
+    public function editPassword(Request $request, ?User $user = null) {
         $user = $user??auth()->user();
         
         // Fixed permission check

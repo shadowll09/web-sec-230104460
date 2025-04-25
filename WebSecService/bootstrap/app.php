@@ -29,10 +29,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        $middleware->alias([
-            'rate.login' => \App\Http\Middleware\RateLimitLogin::class,
-        ]);
+    ->withMiddleware(function ($middleware) {
+        // Register middleware aliases from config
+        if (file_exists($path = config_path('middleware.php'))) {
+            $aliases = require $path;
+            if (isset($aliases['aliases']) && is_array($aliases['aliases'])) {
+                foreach ($aliases['aliases'] as $name => $class) {
+                    $middleware->alias($name, $class);
+                }
+            }
+        }
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

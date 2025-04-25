@@ -20,7 +20,8 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Please login to access this page.');
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
         }
 
         $user = Auth::user();

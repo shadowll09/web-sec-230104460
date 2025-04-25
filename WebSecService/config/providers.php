@@ -12,4 +12,6 @@ return [
     */
 
     Spatie\Permission\PermissionServiceProvider::class,
+    Illuminate\Database\DatabaseServiceProvider::class,
+    App\Providers\RoleMiddlewareServiceProvider::class,
 ];
