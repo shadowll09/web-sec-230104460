@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top animate__animated animate__fadeInDown">
+<nav class="navbar navbar-expand-lg navbar-light fixed-top animate__animated animate__fadeInDown">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" href="/">
       <i class="bi bi-bag-heart me-2" style="font-size: 1.4rem; color: var(--primary-color);"></i>
@@ -81,7 +81,7 @@
             {{ auth()->user()->name }}
           </a>
           <!-- User dropdown menu -->
-          <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn" aria-labelledby="userDropdown" style="border-radius: 10px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+          <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn" aria-labelledby="userDropdown" style="border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
             <li>
               <a class="dropdown-item d-flex align-items-center" href="{{ route('user.profile') }}">
                 <i class="bi bi-person me-2"></i> Profile

@@ -165,6 +165,7 @@ return [
         
         // Application Service Providers
         App\Providers\AppServiceProvider::class,
+        App\Providers\SecurityServiceProvider::class, // Add this line
     ],
 
     /*

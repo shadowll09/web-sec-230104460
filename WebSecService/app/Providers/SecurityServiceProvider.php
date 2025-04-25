@@ -39,11 +39,17 @@ class SecurityServiceProvider extends ServiceProvider
         Validator::extend('no_script_tags', function ($attribute, $value, $parameters, $validator) {
             return !preg_match('/<script\b[^>]*>(.*?)<\/script>/is', $value);
         }, 'The :attribute may not contain script tags.');
-        
+
+        // Add safe_html validation rule
         Validator::extend('safe_html', function ($attribute, $value, $parameters, $validator) {
-            // Strip potentially dangerous tags
-            $sanitized = strip_tags($value, '<p><br><strong><em><ul><ol><li><a><span><div><h1><h2><h3><h4><h5><h6><blockquote>');
-            return $value === $sanitized;
-        }, 'The :attribute contains potentially dangerous HTML.');
+            // Basic implementation - remove or sanitize potentially harmful HTML
+            $disallowedTags = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'];
+            foreach ($disallowedTags as $tag) {
+                if (stripos($value, '<' . $tag) !== false) {
+                    return false;
+                }
+            }
+            return true;
+        }, 'The :attribute contains potentially unsafe HTML.');
     }
 }
