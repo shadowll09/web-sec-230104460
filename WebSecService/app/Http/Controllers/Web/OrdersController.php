@@ -514,13 +514,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * Show the order cancellation form
+     * Show the order cancellation form - employee only
      */
     public function showCancelForm(Order $order)
     {
-        // Check if user is authorized to cancel the order
-        if (Auth::id() != $order->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        // Check if user is authorized to cancel the order (Admin/Employee only)
+        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
+            abort(403, 'Only employees can cancel orders.');
         }
 
         // Only allow cancellation for pending or processing orders
@@ -534,13 +534,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * Process order cancellation
+     * Process order cancellation - employee only
      */
     public function cancelOrder(Request $request, Order $order)
     {
-        // Check if user is authorized to cancel the order
-        if (Auth::id() != $order->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        // Check if user is authorized to cancel the order (Admin/Employee only)
+        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
+            abort(403, 'Only employees can cancel orders.');
         }
 
         // Only allow cancellation for pending or processing orders
@@ -548,9 +548,10 @@ class OrdersController extends Controller
             return redirect()->back()->with('error', 'Only pending or processing orders can be cancelled.');
         }
 
+        // Enhanced validation for cancellation reason
         $request->validate([
-            'reason' => 'required|string',
-            'comments' => 'nullable|string|max:1000',
+            'reason' => 'required|string|in:' . implode(',', array_keys(Feedback::getReasons())),
+            'comments' => 'required|string|min:10|max:1000',
         ]);
 
         return DB::transaction(function() use ($order, $request) {
@@ -565,7 +566,7 @@ class OrdersController extends Controller
                     $product->updateStock(-$item->quantity);
                     
                     // Log stock restore
-                    Log::info("Restored {$item->quantity} items to stock for product {$item->product_id} from cancelled order {$order->id}");
+                    Log::info("Employee {" . Auth::user()->name . "} restored {$item->quantity} items to stock for product {$item->product_id} from cancelled order {$order->id}");
                 }
             }
             
@@ -575,11 +576,13 @@ class OrdersController extends Controller
                 $user->addCredits($order->total_amount);
                 
                 // Log credit refund
-                Log::info("Refunded {$order->total_amount} credits to user {$user->id} for cancelled order {$order->id}");
+                Log::info("Employee {" . Auth::user()->name . "} refunded {$order->total_amount} credits to user {$user->id} for cancelled order {$order->id}");
             }
             
             // Update order status to cancelled
             $order->status = 'cancelled';
+            $order->cancelled_by = Auth::id();
+            $order->cancelled_at = now();
             $order->save();
             
             // Create feedback record
@@ -590,19 +593,11 @@ class OrdersController extends Controller
                 'comments' => $request->comments,
             ]);
 
-            // Send notification to employees and admins
-            $adminsAndEmployees = User::role(['Admin', 'Employee'])
-                ->whereHas('permissions', function($q) {
-                    $q->whereIn('name', ['receive_cancellation_notifications']);
-                })
-                ->get();
-
-            foreach ($adminsAndEmployees as $staff) {
-                $staff->notify(new OrderCancelled($order, $request->reason));
-            }
+            // Send notification to the customer
+            $user->notify(new OrderCancelled($order, $request->reason));
 
             return redirect()->route('orders.show', $order->id)
-                ->with('success', 'Your order has been cancelled successfully and credits have been refunded to your account.');
+                ->with('success', 'The order has been cancelled successfully. Credits have been refunded to the customer\'s account.');
         });
     }
 }

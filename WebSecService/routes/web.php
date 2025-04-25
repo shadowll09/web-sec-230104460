@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\ProductsController;
 use App\Http\Controllers\Web\UsersController;
 use App\Http\Controllers\Web\OrdersController;
 use App\Http\Controllers\Web\FeedbackController;
+use App\Http\Controllers\Web\RolesController;
 use App\Http\Controllers\UserController;
 
 // Auth routes
@@ -91,12 +92,12 @@ Route::middleware(['auth'])->group(function () {
 // Role management routes
 Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:Admin'])->group(function () {
-        Route::get('/roles', [App\Http\Controllers\Web\RolesController::class, 'index'])->name('roles.index');
-        Route::get('/roles/create', [App\Http\Controllers\Web\RolesController::class, 'create'])->name('roles.create');
-        Route::post('/roles', [App\Http\Controllers\Web\RolesController::class, 'store'])->name('roles.store');
-        Route::get('/roles/{role}/edit', [App\Http\Controllers\Web\RolesController::class, 'edit'])->name('roles.edit');
-        Route::put('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'update'])->name('roles.update');
-        Route::delete('/roles/{role}', [App\Http\Controllers\Web\RolesController::class, 'destroy'])->name('roles.destroy');
+        Route::get('/roles', [RolesController::class, 'index'])->name('roles.index');
+        Route::get('/roles/create', [RolesController::class, 'create'])->name('roles.create');
+        Route::post('/roles', [RolesController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{role}/edit', [RolesController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{role}', [RolesController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [RolesController::class, 'destroy'])->name('roles.destroy');
     });
 });
 

@@ -37,6 +37,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
             'employee.feedback' => \App\Http\Middleware\EmployeeFeedbackNotifier::class,
+            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         ]);
         
         // Register middleware aliases from config
