@@ -127,4 +127,11 @@ class ProductsController extends Controller {
 
 		return redirect()->route('products_list');
 	}
+
+	/**
+	 * Show a single product's details
+	 */
+	public function show(Product $product) {
+		return view('products.show', compact('product'));
+	}
 }
