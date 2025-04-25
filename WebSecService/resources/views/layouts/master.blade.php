@@ -30,6 +30,7 @@
     <style>
         /* Base theme (Light) */
         :root {
+            /* Core colors */
             --primary-color: #4a6cf7;
             --secondary-color: #6c757d;
             --success-color: #28a745;
@@ -55,20 +56,13 @@
 
         /* Dark mode variables */
         [data-theme="dark"] {
-            --primary-color: var(--theme-primary);
-            --secondary-color: #828a91;
-            --success-color: #2fb84d;
-            --danger-color: #e34757;
-            --warning-color: #ffd119;
-            --info-color: #1fb6ca;
-            --light-color: #3c4349;
-            --dark-color: #f8f9fa;
             --body-bg: #1a1d20;
             --text-color: #f8f9fa;
             --border-color: #495057;
             --card-bg: #2a2e33;
+            --light-color: #3c4349;
+            --dark-color: #f8f9fa;
             --scrollbar-track: #2a2e33;
-            --scrollbar-thumb: var(--theme-primary);
         }
         
         /* Energy Theme (Red) */
@@ -78,6 +72,7 @@
             --theme-accent: #ff9999;
             --theme-gradient-start: #e63946;
             --theme-gradient-end: #ff6b6b;
+            --scrollbar-thumb: #e63946;
         }
         
         /* Calm Theme (Green) */
@@ -87,6 +82,7 @@
             --theme-accent: #80ed99;
             --theme-gradient-start: #2a9d8f;
             --theme-gradient-end: #57cc99;
+            --scrollbar-thumb: #2a9d8f;
         }
         
         /* Ocean Theme (Blue) */
@@ -96,6 +92,7 @@
             --theme-accent: #90e0ef;
             --theme-gradient-start: #0077b6;
             --theme-gradient-end: #00b4d8;
+            --scrollbar-thumb: #0077b6;
         }
 
         body {
@@ -118,6 +115,10 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
         }
+        
+        .card-header.bg-primary {
+            background-color: var(--theme-primary) !important;
+        }
 
         /* Buttons */
         .btn {
@@ -128,20 +129,19 @@
         }
 
         .btn-primary {
-            background-color: var(--theme-primary);
-            border-color: var(--theme-primary);
+            background-color: var(--theme-primary) !important;
+            border-color: var(--theme-primary) !important;
         }
 
         .btn-primary:hover {
-            background-color: var(--theme-primary);
             filter: brightness(110%);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         
-        /* Gradient buttons for energy */
+        /* Gradient buttons */
         .btn-gradient {
-            background-image: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end));
+            background-image: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
             border: none;
             color: white;
             position: relative;
@@ -215,6 +215,15 @@
             color: var(--text-color);
             transition: color 0.3s;
         }
+        
+        /* Table striped */
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
 
         /* Alerts */
         .alert {
@@ -256,8 +265,16 @@
         }
         
         .badge-themed {
-            background-color: var(--theme-primary);
+            background-color: var(--theme-primary) !important;
             color: white;
+        }
+        
+        .bg-primary {
+            background-color: var(--theme-primary) !important;
+        }
+        
+        .text-primary {
+            color: var(--theme-primary) !important;
         }
 
         /* Notification panel styles */
@@ -352,7 +369,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: var(--theme-primary);
+            background-color: var(--scrollbar-thumb);
             border-radius: 10px;
         }
 
@@ -524,76 +541,172 @@
             });
         }
 
-        // Dark mode functionality
+        // Theme management system
         document.addEventListener('DOMContentLoaded', function() {
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            const icon = darkModeToggle.querySelector('i');
-            
-            // Check for saved theme preference or use preferred color scheme
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            // Set initial theme
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                icon.classList.replace('bi-sun', 'bi-moon-stars');
-            }
-            
-            // Get color theme preference
-            const savedColorTheme = localStorage.getItem('colorTheme');
-            if (savedColorTheme) {
-                document.documentElement.setAttribute('data-color-theme', savedColorTheme);
-            }
-            
-            // Toggle theme on click
-            darkModeToggle.addEventListener('click', function() {
-                if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                    document.documentElement.removeAttribute('data-theme');
-                    localStorage.setItem('theme', 'light');
-                    icon.classList.replace('bi-moon-stars', 'bi-sun');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('theme', 'dark');
-                    icon.classList.replace('bi-sun', 'bi-moon-stars');
-                }
-            });
-            
-            // Set up color theme switchers if they exist
-            const themeOptions = document.querySelectorAll('.theme-option');
-            themeOptions.forEach(option => {
-                // Check if this option is the active one
-                const themeName = option.getAttribute('data-theme');
-                if (themeName === savedColorTheme) {
-                    option.classList.add('active');
-                }
+            // Setup theme manager
+            const themeManager = {
+                // Get current theme settings
+                getTheme() {
+                    return {
+                        darkMode: localStorage.getItem('theme') === 'dark',
+                        colorTheme: localStorage.getItem('colorTheme') || 'default'
+                    };
+                },
                 
-                option.addEventListener('click', function() {
-                    const themeName = this.getAttribute('data-theme');
-                    
-                    // Remove active class from all options
-                    themeOptions.forEach(opt => opt.classList.remove('active'));
-                    
-                    // Add active class to clicked option
-                    this.classList.add('active');
-                    
-                    if (themeName === 'default') {
-                        // Remove color theme attribute
-                        document.documentElement.removeAttribute('data-color-theme');
-                        localStorage.removeItem('colorTheme');
+                // Apply theme settings to DOM
+                applyTheme(settings) {
+                    // Apply dark/light mode
+                    if (settings.darkMode) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
                     } else {
-                        // Set new color theme
-                        document.documentElement.setAttribute('data-color-theme', themeName);
-                        localStorage.setItem('colorTheme', themeName);
+                        document.documentElement.removeAttribute('data-theme');
                     }
-                });
-            });
-        });
-    </script>
+                    
+                    // Apply color theme
+                    if (settings.colorTheme && settings.colorTheme !== 'default') {
+                        document.documentElement.setAttribute('data-color-theme', settings.colorTheme);
+                    } else {
+                        document.documentElement.removeAttribute('data-color-theme');
+                    }
+                    
+                    // Update UI elements
+                    this.updateUIElements(settings);
+                },
+                
+                // Update UI elements to match current theme
+                updateUIElements(settings) {
+                    // Update dark mode toggle
+                    const darkModeToggle = document.getElementById('darkModeToggle');
+                    if (darkModeToggle) {
+                        const icon = darkModeToggle.querySelector('i');
+                        if (settings.darkMode) {
+                            icon.classList.replace('bi-sun', 'bi-moon-stars');
+                        } else {
+                            icon.classList.replace('bi-moon-stars', 'bi-sun');
+                        }
+                    }
+                    
+                    // Update dark mode switch if it exists
+                    const darkModeSwitch = document.getElementById('darkModeSwitch');
+                    if (darkModeSwitch) {
+                        darkModeSwitch.checked = settings.darkMode;
+                    }
+                    
+                    // Update theme options
+                    const themeOptions = document.querySelectorAll('.theme-option');
+                    themeOptions.forEach(option => {
+                        const themeName = option.getAttribute('data-theme');
+                        option.classList.toggle('active', themeName === settings.colorTheme);
+                    });
+                },
+                
+                // Save settings to localStorage
+                saveTheme(settings) {
+                    if (settings.darkMode) {
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                    }
+                    
+                    if (settings.colorTheme && settings.colorTheme !== 'default') {
+                        localStorage.setItem('colorTheme', settings.colorTheme);
+                    } else {
+                        localStorage.removeItem('colorTheme');
+                    }
+                },
+                
+                // Toggle dark mode
+                toggleDarkMode() {
+                    const settings = this.getTheme();
+                    settings.darkMode = !settings.darkMode;
+                    this.saveTheme(settings);
+                    this.applyTheme(settings);
+                },
+                
+                // Set color theme
+                setColorTheme(themeName) {
+                    const settings = this.getTheme();
+                    settings.colorTheme = themeName;
+                    this.saveTheme(settings);
+                    this.applyTheme(settings);
+                },
+                
+                // Initialize theme from saved preferences
+                init() {
+                    // Check for saved preference or use system preference
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const settings = this.getTheme();
+                    
+                    // If no saved preference, use system preference
+                    if (!localStorage.getItem('theme') && prefersDark) {
+                        settings.darkMode = true;
+                    }
+                    
+                    this.applyTheme(settings);
+                    
+                    // Set up event listeners
+                    this.setupEventListeners();
+                },
+                
+                // Set up event listeners
+                setupEventListeners() {
+                    // Dark mode toggle button
+                    const darkModeToggle = document.getElementById('darkModeToggle');
+                    if (darkModeToggle) {
+                        darkModeToggle.addEventListener('click', () => this.toggleDarkMode());
+                    }
+                    
+                    // Dark mode switch in profile page
+                    const darkModeSwitch = document.getElementById('darkModeSwitch');
+                    if (darkModeSwitch) {
+                        darkModeSwitch.addEventListener('change', () => {
+                            const settings = this.getTheme();
+                            settings.darkMode = darkModeSwitch.checked;
+                            this.saveTheme(settings);
+                            this.applyTheme(settings);
+                        });
+                    }
+                    
+                    // Theme color options
+                    const themeOptions = document.querySelectorAll('.theme-option');
+                    themeOptions.forEach(option => {
+                        option.addEventListener('click', () => {
+                            const themeName = option.getAttribute('data-theme');
+                            this.setColorTheme(themeName);
+                        });
+                    });
+                    
+                    // Apply theme button
+                    const applyThemeBtn = document.querySelector('.btn-gradient');
+                    if (applyThemeBtn && applyThemeBtn.closest('.card-body') && applyThemeBtn.closest('.card-body').querySelector('.theme-selector')) {
+                        applyThemeBtn.addEventListener('click', () => {
+                            const activeTheme = document.querySelector('.theme-option.active');
+                            if (activeTheme) {
+                                const themeName = activeTheme.getAttribute('data-theme');
+                                this.setColorTheme(themeName);
+                                
+                                // Show success message
+                                const alert = document.createElement('div');
+                                alert.className = 'alert alert-success animate__animated animate__fadeIn mt-3';
+                                alert.textContent = 'Theme applied successfully!';
+                                applyThemeBtn.parentNode.appendChild(alert);
+                                
+                                // Remove alert after 3 seconds
+                                setTimeout(() => {
+                                    alert.classList.remove('animate__fadeIn');
+                                    alert.classList.add('animate__fadeOut');
+                                    setTimeout(() => alert.remove(), 500);
+                                }, 3000);
+                            }
+                        });
+                    }
+                }
+            };
+            
+            // Initialize theme manager
+            themeManager.init();
 
-    <!-- Custom script for cart item animations -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add animation to cart items
+            // Handle cart animations
             const cartItems = document.querySelectorAll('.cart-item');
             cartItems.forEach(item => {
                 item.classList.add('animate__animated', 'animate__fadeIn');
