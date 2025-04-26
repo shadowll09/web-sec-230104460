@@ -92,22 +92,22 @@
                     <p class="text-muted mb-3">Select a color theme that matches your energy level and mood.</p>
                     
                     <div class="theme-selector mb-4">
-                        <div class="theme-option default" data-theme="default" title="Default (Blue)"></div>
-                        <div class="theme-option energy" data-theme="energy" title="Energy (Red)"></div>
-                        <div class="theme-option calm" data-theme="calm" title="Calm (Green)"></div>
-                        <div class="theme-option ocean" data-theme="ocean" title="Ocean (Blue)"></div>
+                        <div class="theme-option default @if($user->theme_color == 'default' || !$user->theme_color) active @endif" data-theme="default" title="Default (Blue)"></div>
+                        <div class="theme-option energy @if($user->theme_color == 'energy') active @endif" data-theme="energy" title="Energy (Red)"></div>
+                        <div class="theme-option calm @if($user->theme_color == 'calm') active @endif" data-theme="calm" title="Calm (Green)"></div>
+                        <div class="theme-option ocean @if($user->theme_color == 'ocean') active @endif" data-theme="ocean" title="Ocean (Blue)"></div>
                     </div>
                     
                     <h5 class="mb-3">Dark Mode</h5>
                     <p class="text-muted mb-3">Toggle between light and dark mode.</p>
                     
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                        <input class="form-check-input" type="checkbox" id="darkModeSwitch" @if($user->theme_dark_mode) checked @endif>
                         <label class="form-check-label" for="darkModeSwitch">Enable Dark Mode</label>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="button" class="btn btn-gradient w-100">
+                        <button type="button" id="applyThemeBtn" class="btn btn-gradient w-100">
                             <i class="bi bi-check-circle me-2"></i>Apply Theme
                         </button>
                     </div>
@@ -142,8 +142,17 @@
         
         // Preview theme changes when clicking theme options
         const themeOptions = document.querySelectorAll('.theme-option');
+        let selectedTheme = document.querySelector('.theme-option.active').getAttribute('data-theme');
+        
         themeOptions.forEach(option => {
             option.addEventListener('click', function() {
+                // Update the selected theme
+                selectedTheme = this.getAttribute('data-theme');
+                
+                // Update active class on theme options
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
                 // The main theme manager will handle the actual theme change
                 // This just provides immediate visual feedback in the preview section
                 const themeName = this.getAttribute('data-theme');
@@ -172,6 +181,82 @@
                 previewPrimaryBtn.style.borderColor = primaryColor;
                 previewGradientBtn.style.backgroundImage = `linear-gradient(to right, ${gradientStart}, ${gradientEnd})`;
                 previewAlert.style.backgroundColor = primaryColor;
+            });
+        });
+        
+        // Make the Apply Theme button functional
+        const applyThemeBtn = document.getElementById('applyThemeBtn');
+        const darkModeSwitch = document.getElementById('darkModeSwitch');
+        
+        applyThemeBtn.addEventListener('click', function() {
+            // Get the theme manager from the parent page
+            const isDarkMode = darkModeSwitch.checked;
+            
+            // Save to database via AJAX
+            fetch('{{ route('save.theme.preferences') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    theme_dark_mode: isDarkMode,
+                    theme_color: selectedTheme
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Apply the theme changes
+                    if (isDarkMode) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                    }
+                    
+                    if (selectedTheme && selectedTheme !== 'default') {
+                        document.documentElement.setAttribute('data-color-theme', selectedTheme);
+                    } else {
+                        document.documentElement.removeAttribute('data-color-theme');
+                    }
+                    
+                    // Show success message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success animate__animated animate__fadeIn mt-3';
+                    alert.textContent = 'Theme preferences saved successfully!';
+                    applyThemeBtn.parentNode.appendChild(alert);
+                    
+                    // Remove alert after 3 seconds
+                    setTimeout(() => {
+                        alert.classList.remove('animate__fadeIn');
+                        alert.classList.add('animate__fadeOut');
+                        setTimeout(() => alert.remove(), 500);
+                    }, 3000);
+                    
+                    // Update localStorage for consistency
+                    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+                    if (selectedTheme && selectedTheme !== 'default') {
+                        localStorage.setItem('colorTheme', selectedTheme);
+                    } else {
+                        localStorage.removeItem('colorTheme');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error saving theme preferences:', error);
+                
+                // Show error message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger animate__animated animate__fadeIn mt-3';
+                alert.textContent = 'Error saving theme preferences. Please try again.';
+                applyThemeBtn.parentNode.appendChild(alert);
+                
+                // Remove alert after 3 seconds
+                setTimeout(() => {
+                    alert.classList.remove('animate__fadeIn');
+                    alert.classList.add('animate__fadeOut');
+                    setTimeout(() => alert.remove(), 500);
+                }, 3000);
             });
         });
     });

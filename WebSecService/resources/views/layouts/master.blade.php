@@ -9,6 +9,26 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    <!-- Early theme application -->
+    <script>
+        // Apply theme early to avoid flash of wrong theme
+        (function() {
+            // Check for user's saved theme preferences
+            const darkMode = localStorage.getItem('theme') === 'dark';
+            const colorTheme = localStorage.getItem('colorTheme');
+            
+            // Apply dark mode if needed
+            if (darkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+            
+            // Apply color theme if needed
+            if (colorTheme && colorTheme !== 'default') {
+                document.documentElement.setAttribute('data-color-theme', colorTheme);
+            }
+        })();
+    </script>
+    
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     
