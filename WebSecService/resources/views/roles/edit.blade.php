@@ -144,19 +144,39 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle select all button
-        document.getElementById('selectAll').addEventListener('click', function() {
-            document.querySelectorAll('input[name="permissions[]"]').forEach(function(checkbox) {
-                checkbox.checked = true;
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Toggle all permissions
+        const toggleAllCheckbox = document.getElementById('toggleAllPermissions');
+        const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
+        
+        toggleAllCheckbox.addEventListener('change', function() {
+            permissionCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = toggleAllCheckbox.checked;
             });
         });
-
-        // Handle deselect all button
-        document.getElementById('deselectAll').addEventListener('click', function() {
-            document.querySelectorAll('input[name="permissions[]"]').forEach(function(checkbox) {
-                checkbox.checked = false;
+        
+        // Update toggle all checkbox state when individual permissions change
+        permissionCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                updateToggleAllCheckbox();
             });
         });
+        
+        // Initial state of toggle all checkbox
+        updateToggleAllCheckbox();
+        
+        function updateToggleAllCheckbox() {
+            const checkedCount = document.querySelectorAll('.permission-checkbox:checked').length;
+            const totalCount = permissionCheckboxes.length;
+            
+            toggleAllCheckbox.checked = checkedCount === totalCount;
+            toggleAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+        }
     });
 </script>
 @endpush

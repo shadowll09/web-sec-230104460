@@ -53,6 +53,7 @@ class RolesController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
             'permissions' => ['array'],
+            'management_level' => ['nullable', 'string', 'in:low,middle,high'],
         ]);
 
         // Create role using DB transaction
@@ -61,7 +62,8 @@ class RolesController extends Controller
             // Create new role
             $role = Role::create([
                 'name' => $request->name,
-                'guard_name' => 'web'
+                'guard_name' => 'web',
+                'management_level' => $request->management_level,
             ]);
 
             // Assign permissions to role
@@ -108,6 +110,7 @@ class RolesController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('roles')->ignore($role->id)],
             'permissions' => ['array'],
+            'management_level' => ['nullable', 'string', 'in:low,middle,high'],
         ]);
 
         // Prevent modifying Admin role if user is not an admin
@@ -118,7 +121,10 @@ class RolesController extends Controller
         // Update role using DB transaction
         DB::beginTransaction();
         try {
-            $role->update(['name' => $request->name]);
+            $role->update([
+                'name' => $request->name,
+                'management_level' => $request->management_level,
+            ]);
             
             // Sync permissions
             if ($request->has('permissions')) {
