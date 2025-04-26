@@ -6,10 +6,12 @@
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h2 class="mb-0">Products</h2>
         @auth
-            @if(auth()->user()->hasAnyRole(['Admin', 'Employee']))
-                <a href="{{ route('products_edit') }}" class="btn btn-light animate__animated animate__fadeIn">
-                    <i class="bi bi-plus-circle me-1"></i> Add New Product
-                </a>
+            @if(auth()->user()->hasPermissionTo('add_products'))
+                <div class="mb-4">
+                    <a href="{{ route('products_edit') }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i> Add New Product
+                    </a>
+                </div>
             @endif
         @endauth
     </div>
@@ -74,15 +76,15 @@
 
                     <div class="card-footer bg-transparent border-top-0">
                         @auth
-                            @if(auth()->user()->hasAnyRole(['Admin', 'Employee']))
+                            @if(auth()->user()->hasPermissionTo('edit_products'))
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="text-muted">Stock: {{ $product->stock_quantity }}</span>
                                     <div>
-                                        <a href="{{ route('products_edit', $product) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ route('products_edit', $product->id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-pencil me-1"></i> Edit
                                         </a>
                                         @if(auth()->user()->hasPermissionTo('delete_products'))
-                                            <a href="{{ route('products_delete', $product) }}" class="btn btn-sm btn-outline-danger ms-1"
+                                            <a href="{{ route('products_delete', $product->id) }}" class="btn btn-sm btn-outline-danger ms-1"
                                                onclick="return confirm('Are you sure you want to delete this product?')">
                                                 <i class="bi bi-trash me-1"></i> Delete
                                             </a>

@@ -67,7 +67,7 @@
                         </form>
                     @endif
                     
-                    @if(auth()->check() && (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Employee')))
+                    @if(auth()->check() && auth()->user()->hasPermissionTo('edit_products'))
                         <div class="mt-4">
                             <a href="{{ route('products_edit', $product) }}" class="btn btn-secondary me-2">
                                 <i class="bi bi-pencil me-1"></i> Edit Product

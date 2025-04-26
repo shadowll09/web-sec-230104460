@@ -57,7 +57,7 @@
                                     <h2 class="display-4">${{ number_format($user->credits, 2) }}</h2>
                                     <p class="lead">Available Credits</p>
 
-                                    @if(auth()->user()->hasAnyRole(['Admin', 'Employee']) && auth()->id() != $user->id)
+                                    @if(auth()->user()->hasPermissionTo('manage_orders') && auth()->id() != $user->id)
                                         <a href="{{ route('add_credits_form', $user) }}" class="btn btn-success">
                                             <i class="bi bi-plus-circle"></i> Add Credits
                                         </a>

@@ -18,29 +18,55 @@ class ProductsController extends Controller {
     }
 
 	public function list(Request $request) {
-
-		$query = Product::select("products.*");
-
-		$query->when($request->keywords,
-		fn($q)=> $q->where("name", "like", "%$request->keywords%"));
-
-		$query->when($request->min_price,
-		fn($q)=> $q->where("price", ">=", $request->min_price));
-
-		$query->when($request->max_price, fn($q)=>
-		$q->where("price", "<=", $request->max_price));
-
-		$query->when($request->order_by,
-		fn($q)=> $q->orderBy($request->order_by, $request->order_direction??"ASC"));
-
-		// For customers, only show products with stock > 0
-		if (auth()->check() && auth()->user()->hasRole('Customer')) {
-			$query->where('stock_quantity', '>', 0);
+		$query = Product::query();
+		
+		// Apply search and filter logic
+		if ($request->filled('search')) {
+			$search = $request->search;
+			$query->where(function($q) use ($search) {
+				$q->where('name', 'like', "%{$search}%")
+				  ->orWhere('description', 'like', "%{$search}%");
+			});
 		}
-
-		$products = $query->get();
-
-		return view('products.list', compact('products'));
+		
+		if ($request->filled('category')) {
+			$query->where('category', $request->category);
+		}
+		
+		if ($request->filled('min_price')) {
+			$query->where('price', '>=', $request->min_price);
+		}
+		
+		if ($request->filled('max_price')) {
+			$query->where('price', '<=', $request->max_price);
+		}
+		
+		// Sort products
+		$sort = $request->sort ?? 'name_asc';
+		
+		switch ($sort) {
+			case 'price_asc':
+				$query->orderBy('price', 'asc');
+				break;
+			case 'price_desc':
+				$query->orderBy('price', 'desc');
+				break;
+			case 'name_desc':
+				$query->orderBy('name', 'desc');
+				break;
+			case 'newest':
+				$query->orderBy('created_at', 'desc');
+				break;
+			default:
+				$query->orderBy('name', 'asc');
+		}
+		
+		$products = $query->paginate(12)->withQueryString();
+		
+		// Get unique categories for the filter dropdown
+		$categories = Product::distinct()->pluck('category')->filter()->sort();
+		
+		return view('products.list', compact('products', 'categories'));
 	}
 
 	public function edit(Request $request, Product $product = null) {
@@ -131,10 +157,20 @@ class ProductsController extends Controller {
 	/**
 	 * Show a single product's details
 	 */
-	public function show(Request $request, Product $product) {
-		// Add product view logic here
-		// Since route model binding is used, the product is automatically fetched
+	public function show(Product $product)
+	{
+		$relatedProducts = Product::where('id', '!=', $product->id)
+			->where('category', $product->category)
+			->inRandomOrder()
+			->limit(4)
+			->get();
+			
+		// If user is logged in, generate a personalized view token
+		$viewToken = null;
+		if (auth()->check()) {
+			$viewToken = md5(auth()->id() . '_' . $product->id . '_' . time());
+		}
 		
-		return view('products.show', compact('product'));
+		return view('products.show', compact('product', 'relatedProducts', 'viewToken'));
 	}
 }
