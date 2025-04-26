@@ -513,19 +513,23 @@ class OrdersController extends Controller
             abort(403, 'Unauthorized action. You need cancel_order permission.');
         }
         
-        // Additional check for customers - can only cancel their own orders
-        if (Auth::id() != $order->user_id && !Auth::user()->hasPermissionTo('manage_orders')) {
-            abort(403, 'You can only cancel your own orders.');
-        }
-
         // Only allow cancellation for pending or processing orders
         if (!in_array($order->status, ['pending', 'processing'])) {
             return redirect()->back()->with('error', 'Only pending or processing orders can be cancelled.');
         }
 
-        $reasons = Feedback::getReasons();
+        // Determine if this is a customer or employee cancellation
+        $isEmployeeCancellation = false;
+        $isOwner = Auth::id() == $order->user_id;
         
-        return view('orders.cancel', compact('order', 'reasons'));
+        if (!$isOwner && Auth::user()->hasPermissionTo('manage_orders')) {
+            $isEmployeeCancellation = true;
+            $reasons = Feedback::getEmployeeReasons();
+        } else {
+            $reasons = Feedback::getReasons();
+        }
+        
+        return view('orders.cancel', compact('order', 'reasons', 'isEmployeeCancellation'));
     }
 
     /**
@@ -538,23 +542,32 @@ class OrdersController extends Controller
             abort(403, 'Unauthorized action. You need cancel_order permission.');
         }
         
-        // Additional check for customers - can only cancel their own orders
-        if (Auth::id() != $order->user_id && !Auth::user()->hasPermissionTo('manage_orders')) {
-            abort(403, 'You can only cancel your own orders.');
-        }
-
         // Only allow cancellation for pending or processing orders
         if (!in_array($order->status, ['pending', 'processing'])) {
             return redirect()->back()->with('error', 'Only pending or processing orders can be cancelled.');
         }
 
-        // Enhanced validation for cancellation reason
-        $request->validate([
-            'reason' => 'required|string|in:' . implode(',', array_keys(Feedback::getReasons())),
-            'comments' => 'required|string|min:10|max:1000',
-        ]);
+        // Determine if this is a customer or employee cancellation
+        $isEmployeeCancellation = false;
+        $isOwner = Auth::id() == $order->user_id;
+        
+        if (!$isOwner && Auth::user()->hasPermissionTo('manage_orders')) {
+            $isEmployeeCancellation = true;
+            
+            // Validate employee cancellation
+            $request->validate([
+                'reason' => 'required|string|in:' . implode(',', array_keys(Feedback::getEmployeeReasons())),
+                'staff_notes' => 'required|string|min:10|max:1000',
+            ]);
+        } else {
+            // Validate customer cancellation
+            $request->validate([
+                'reason' => 'required|string|in:' . implode(',', array_keys(Feedback::getReasons())),
+                'comments' => 'required|string|min:10|max:1000',
+            ]);
+        }
 
-        return DB::transaction(function() use ($order, $request) {
+        return DB::transaction(function() use ($order, $request, $isEmployeeCancellation) {
             // Get all order items to restore stock
             $orderItems = $order->items;
             
@@ -585,16 +598,28 @@ class OrdersController extends Controller
             $order->cancelled_at = now();
             $order->save();
             
-            // Create feedback record
-            $feedback = Feedback::create([
+            // Create feedback record with proper cancellation type
+            $feedbackData = [
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
                 'reason' => $request->reason,
-                'comments' => $request->comments,
-            ]);
+                'cancellation_type' => $isEmployeeCancellation ? 
+                    Feedback::CANCELLATION_TYPE_EMPLOYEE : 
+                    Feedback::CANCELLATION_TYPE_CUSTOMER,
+            ];
+            
+            if ($isEmployeeCancellation) {
+                $feedbackData['staff_notes'] = $request->staff_notes;
+            } else {
+                $feedbackData['comments'] = $request->comments;
+            }
+            
+            $feedback = Feedback::create($feedbackData);
 
             // Send notification to the customer
-            $user->notify(new OrderCancelled($order, $request->reason));
+            if ($user) {
+                $user->notify(new OrderCancelled($order, $request->reason, $isEmployeeCancellation));
+            }
 
             return redirect()->route('orders.show', $order->id)
                 ->with('success', 'The order has been cancelled successfully. Credits have been refunded to the customer\'s account.');

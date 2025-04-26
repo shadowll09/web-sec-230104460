@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Order;
+use App\Models\Feedback;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -14,14 +15,16 @@ class OrderCancelled extends Notification implements ShouldQueue
     
     protected $order;
     protected $reason;
+    protected $isEmployeeCancellation;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(Order $order, string $reason)
+    public function __construct(Order $order, string $reason, bool $isEmployeeCancellation = false)
     {
         $this->order = $order;
         $this->reason = $reason;
+        $this->isEmployeeCancellation = $isEmployeeCancellation;
     }
 
     /**
@@ -37,13 +40,18 @@ class OrderCancelled extends Notification implements ShouldQueue
      */
     public function toArray($notifiable): array
     {
+        $reasonText = $this->isEmployeeCancellation 
+            ? Feedback::getEmployeeReasons()[$this->reason] ?? $this->reason
+            : Feedback::getReasons()[$this->reason] ?? $this->reason;
+            
         return [
             'order_id' => $this->order->id,
             'customer_name' => $this->order->user->name,
-            'reason' => $this->reason,
+            'reason' => $reasonText,
             'cancelled_at' => now()->toDateTimeString(),
             'amount' => $this->order->total_amount,
-            'url' => route('orders.show', $this->order->id)
+            'url' => route('orders.show', $this->order->id),
+            'is_employee_cancellation' => $this->isEmployeeCancellation,
         ];
     }
 }
