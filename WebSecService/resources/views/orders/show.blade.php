@@ -98,17 +98,43 @@
             @if(isset($order->feedback) && $order->feedback->count() > 0)
             <div class="card mb-4 animate__animated animate__fadeIn">
                 <div class="card-header bg-info text-white">
-                    <h3 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Customer Feedback</h3>
+                    <h3 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Feedback Information</h3>
                 </div>
                 <div class="card-body">
                     @foreach($order->feedback as $feedback)
                     <div class="border-bottom pb-3 mb-3">
                         <div class="d-flex justify-content-between mb-2">
-                            <h5 class="mb-1">{{ $feedback->reason }}</h5>
+                            <h5 class="mb-1">
+                                @if($feedback->cancellation_type == 'employee')
+                                    <span class="badge bg-danger me-2">Administrative Cancellation</span>
+                                @else
+                                    <span class="badge bg-warning me-2">Customer Cancellation</span>
+                                @endif
+                                {{ $feedback->isEmployeeCancellation() ? 
+                                    (App\Models\Feedback::getEmployeeReasons()[$feedback->reason] ?? $feedback->reason) : 
+                                    (App\Models\Feedback::getReasons()[$feedback->reason] ?? $feedback->reason) }}
+                            </h5>
                             <span class="text-muted small">{{ $feedback->created_at->format('M d, Y g:i A') }}</span>
                         </div>
-                        @if($feedback->comments)
-                        <p class="mb-2">{{ $feedback->comments }}</p>
+                        
+                        @if($feedback->isCustomerCancellation() && $feedback->comments)
+                            <div class="card bg-light mb-3">
+                                <div class="card-body py-2">
+                                    <strong>Customer Comments:</strong>
+                                    <p class="mb-0">{{ $feedback->comments }}</p>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if($feedback->isEmployeeCancellation() && $feedback->staff_notes && Auth::user()->hasPermissionTo('manage_orders'))
+                            <div class="card bg-light mb-3 border-danger">
+                                <div class="card-header bg-danger bg-opacity-10 text-danger">
+                                    <strong><i class="bi bi-eye-slash me-1"></i> Internal Staff Notes (Not visible to customer)</strong>
+                                </div>
+                                <div class="card-body py-2">
+                                    <p class="mb-0">{{ $feedback->staff_notes }}</p>
+                                </div>
+                            </div>
                         @endif
                         
                         <!-- Feedback Status -->
