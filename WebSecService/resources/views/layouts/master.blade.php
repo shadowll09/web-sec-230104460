@@ -131,6 +131,7 @@
         .btn-primary {
             background-color: var(--theme-primary) !important;
             border-color: var(--theme-primary) !important;
+            color: white !important; /* Ensure text is visible */
         }
 
         .btn-primary:hover {
@@ -143,14 +144,14 @@
         .btn-gradient {
             background-image: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
             border: none;
-            color: white;
+            color: white !important; /* Ensure text is visible */
             position: relative;
             z-index: 1;
             overflow: hidden;
         }
         
         .btn-gradient:hover {
-            color: white;
+            color: white !important;
         }
         
         .btn-gradient:before {
@@ -234,7 +235,7 @@
         
         .alert-themed {
             background-color: var(--theme-primary);
-            color: white;
+            color: white !important; /* Ensure text is visible */
             border-left: 4px solid var(--theme-accent);
         }
 
@@ -261,7 +262,7 @@
         
         /* Badge styling */
         .badge {
-            transition: background-color 0.3s;
+            color: white !important; /* Ensure text is visible in badges */
         }
         
         .badge-themed {
@@ -312,45 +313,41 @@
         /* Theme selector */
         .theme-selector {
             display: flex;
-            flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 20px;
         }
         
         .theme-option {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             cursor: pointer;
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid var(--border-color);
+            transition: transform 0.2s, border-color 0.2s;
         }
         
         .theme-option:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: scale(1.1);
         }
         
         .theme-option.active {
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 2px var(--theme-primary);
-        }
-        
-        .theme-option.energy {
-            background: linear-gradient(135deg, #e63946 0%, #ff6b6b 100%);
-        }
-        
-        .theme-option.calm {
-            background: linear-gradient(135deg, #2a9d8f 0%, #57cc99 100%);
-        }
-        
-        .theme-option.ocean {
-            background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+            border-color: var(--theme-primary);
+            transform: scale(1.1);
         }
         
         .theme-option.default {
-            background: linear-gradient(135deg, #4a6cf7 0%, #6384ff 100%);
+            background-color: #4a6cf7;
+        }
+        
+        .theme-option.energy {
+            background-color: #e63946;
+        }
+        
+        .theme-option.calm {
+            background-color: #2a9d8f;
+        }
+        
+        .theme-option.ocean {
+            background-color: #0077b6;
         }
 
         /* Container padding */
@@ -600,8 +597,9 @@
                     });
                 },
                 
-                // Save settings to localStorage
+                // Save settings to localStorage and database
                 saveTheme(settings) {
+                    // Save to localStorage for immediate use
                     if (settings.darkMode) {
                         localStorage.setItem('theme', 'dark');
                     } else {
@@ -613,6 +611,30 @@
                     } else {
                         localStorage.removeItem('colorTheme');
                     }
+                    
+                    // Save to database if user is logged in
+                    @auth
+                    fetch('{{ route('save.theme.preferences') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            theme_dark_mode: settings.darkMode,
+                            theme_color: settings.colorTheme || 'default'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Theme preferences saved to database');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error saving theme preferences:', error);
+                    });
+                    @endauth
                 },
                 
                 // Toggle dark mode
@@ -631,8 +653,31 @@
                     this.applyTheme(settings);
                 },
                 
-                // Initialize theme from saved preferences
+                // Initialize theme from saved preferences or database
                 init() {
+                    // Use user's database preferences if available
+                    @auth
+                    const userDarkMode = {{ Auth::user()->theme_dark_mode ? 'true' : 'false' }};
+                    const userColorTheme = '{{ Auth::user()->theme_color }}';
+                    
+                    // Set them in localStorage so they're available on next load
+                    if (userDarkMode) {
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                    }
+                    
+                    if (userColorTheme && userColorTheme !== 'default') {
+                        localStorage.setItem('colorTheme', userColorTheme);
+                    } else {
+                        localStorage.removeItem('colorTheme');
+                    }
+                    
+                    this.applyTheme({
+                        darkMode: userDarkMode,
+                        colorTheme: userColorTheme
+                    });
+                    @else
                     // Check for saved preference or use system preference
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const settings = this.getTheme();
@@ -643,6 +688,7 @@
                     }
                     
                     this.applyTheme(settings);
+                    @endauth
                     
                     // Set up event listeners
                     this.setupEventListeners();

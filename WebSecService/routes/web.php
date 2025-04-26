@@ -164,3 +164,7 @@ Route::get('/notifications/mark-as-read', function() {
 // Admin fix route
 Route::get('/fix-admin-permissions', [App\Http\Controllers\Web\UsersController::class, 'fixAdminPermissions'])
     ->middleware(['auth'])->name('fix.admin.permissions');
+
+// Theme preferences route
+Route::post('/save-theme-preferences', [App\Http\Controllers\Web\UsersController::class, 'saveThemePreferences'])
+    ->middleware(['auth'])->name('save.theme.preferences');
