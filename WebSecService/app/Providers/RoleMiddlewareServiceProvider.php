@@ -6,6 +6,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CheckPermission;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 class RoleMiddlewareServiceProvider extends ServiceProvider
 {
@@ -23,7 +26,8 @@ class RoleMiddlewareServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $router = $this->app->make(Router::class);
-        $router->aliasMiddleware('role', CheckRole::class);
-        $router->aliasMiddleware('permission', CheckPermission::class);
+        $router->aliasMiddleware('role', RoleMiddleware::class);
+        $router->aliasMiddleware('permission', PermissionMiddleware::class);
+        $router->aliasMiddleware('role_or_permission', RoleOrPermissionMiddleware::class);
     }
 }

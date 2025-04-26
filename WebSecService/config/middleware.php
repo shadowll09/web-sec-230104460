@@ -14,8 +14,8 @@ return [
 
     // Role and permission middleware
     'role' => \App\Http\Middleware\CheckRole::class,
-    'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
-    'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+    'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class, // Fix: changed Middlewares to Middleware
+    'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class, // Fix: also updated this one
     
     // Rate limiting middleware
     'rate.login' => \App\Http\Middleware\RateLimitLogin::class,

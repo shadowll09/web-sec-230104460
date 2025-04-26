@@ -82,10 +82,13 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Order cancellation routes - now available to anyone with cancel_order permission
-    Route::middleware(['permission:cancel_order'])->group(function () {
-        Route::get('/orders/{order}/cancel', [OrdersController::class, 'showCancelForm'])->name('orders.cancel.form');
-        Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])->name('orders.cancel');
-    });
+    Route::get('/orders/{order}/cancel', [App\Http\Controllers\Web\OrdersController::class, 'showCancelForm'])
+        ->middleware(['auth', 'permission:cancel_order'])
+        ->name('orders.cancel.form');
+
+    Route::post('/orders/{order}/cancel', [App\Http\Controllers\Web\OrdersController::class, 'cancelOrder'])
+        ->middleware(['auth', 'permission:cancel_order'])
+        ->name('orders.cancel');
 });
 
 // User profile route

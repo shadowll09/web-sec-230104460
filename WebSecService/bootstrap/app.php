@@ -34,8 +34,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rate.login' => \App\Http\Middleware\RateLimitLogin::class,
             'role' => \App\Http\Middleware\CheckRole::class,
-            'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class, // Fix: changed Middlewares to Middleware
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class, // Fix: also updated this one
             'employee.feedback' => \App\Http\Middleware\EmployeeFeedbackNotifier::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
             'auth' => \App\Http\Middleware\Authenticate::class,

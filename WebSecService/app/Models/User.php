@@ -17,6 +17,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    // Management Levels
+    const MANAGEMENT_LEVEL_LOW = 'low';      // Only handle customer tasks
+    const MANAGEMENT_LEVEL_MIDDLE = 'middle'; // Handle customers and low-level management
+    const MANAGEMENT_LEVEL_HIGH = 'high';    // Full system access
+
     /**
      * The attributes that are mass assignable.
      *
@@ -29,6 +34,7 @@ class User extends Authenticatable
         'credits',
         'theme_dark_mode',
         'theme_color',
+        'management_level',
     ];
 
     /**
@@ -62,6 +68,51 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Check if the user has a specified management level or higher
+     */
+    public function hasManagementLevel(string $level): bool
+    {
+        if (empty($this->management_level)) {
+            return false;
+        }
+
+        if ($this->management_level === self::MANAGEMENT_LEVEL_HIGH) {
+            return true; // High level has access to everything
+        }
+
+        if ($this->management_level === self::MANAGEMENT_LEVEL_MIDDLE) {
+            return $level !== self::MANAGEMENT_LEVEL_HIGH; // Middle has access to middle and low
+        }
+
+        // Low level only has access to low
+        return $this->management_level === $level && $level === self::MANAGEMENT_LEVEL_LOW;
+    }
+
+    /**
+     * Check if user is a low-level manager (can only handle customer tasks)
+     */
+    public function isLowLevelManager(): bool
+    {
+        return $this->management_level === self::MANAGEMENT_LEVEL_LOW;
+    }
+
+    /**
+     * Check if user is a middle-level manager (can handle customers and low-level management)
+     */
+    public function isMiddleLevelManager(): bool
+    {
+        return $this->management_level === self::MANAGEMENT_LEVEL_MIDDLE;
+    }
+
+    /**
+     * Check if user is a high-level manager (full system access)
+     */
+    public function isHighLevelManager(): bool
+    {
+        return $this->management_level === self::MANAGEMENT_LEVEL_HIGH;
     }
 
     /**
