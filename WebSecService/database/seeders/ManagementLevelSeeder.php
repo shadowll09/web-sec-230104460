@@ -5,50 +5,60 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class ManagementLevelSeeder extends Seeder
 {
     /**
-     * Seed management levels for users based on roles.
+     * Assign management levels to users based on their roles.
+     * - High: Full access to all features (but still respecting permissions)
+     * - Middle: Handle both low-level tasks and customer tasks
+     * - Low: Only handle customer feedback or customer-related tasks
+     * - None (null): Regular users with no management privileges
      */
     public function run(): void
     {
-        $this->command->info('Assigning management levels to users...');
+        $this->command->info('Setting management levels based on roles...');
         
-        // Assign high level management to Admins
-        $admins = User::role('Admin')->get();
-        foreach ($admins as $admin) {
-            $admin->management_level = User::MANAGEMENT_LEVEL_HIGH;
-            $admin->save();
-            $this->command->info("Assigned HIGH management level to {$admin->name} (Admin)");
-        }
+        // Get all users
+        $users = User::all();
+        $count = 0;
         
-        // Assign middle level management to Employees
-        $employees = User::role('Employee')->get();
-        foreach ($employees as $employee) {
-            // Skip if they're already an admin with high level
-            if ($employee->management_level === User::MANAGEMENT_LEVEL_HIGH) {
+        foreach ($users as $user) {
+            // Assign high management level to Admins
+            if ($user->hasRole('Admin')) {
+                $user->management_level = User::MANAGEMENT_LEVEL_HIGH;
+                $user->save();
+                $count++;
                 continue;
             }
             
-            $employee->management_level = User::MANAGEMENT_LEVEL_MIDDLE;
-            $employee->save();
-            $this->command->info("Assigned MIDDLE management level to {$employee->name} (Employee)");
-        }
-        
-        // Assign low level management to select customers
-        // For demonstration, we'll assign low management to customers with "supervisor" in their name
-        $customers = User::role('Customer')
-            ->where('name', 'like', '%supervisor%')
-            ->get();
+            // Assign middle management level to Employees (skip if already high)
+            if ($user->hasRole('Employee') && $user->management_level !== User::MANAGEMENT_LEVEL_HIGH) {
+                $user->management_level = User::MANAGEMENT_LEVEL_MIDDLE;
+                $user->save();
+                $count++;
+                continue;
+            }
             
-        foreach ($customers as $customer) {
-            $customer->management_level = User::MANAGEMENT_LEVEL_LOW;
-            $customer->save();
-            $this->command->info("Assigned LOW management level to {$customer->name} (Customer with Supervisor privileges)");
+            // Assign low management level only to Customers with "supervisor" in their name
+            if ($user->hasRole('Customer') && 
+                stripos($user->name, 'supervisor') !== false && 
+                $user->management_level === null) {
+                $user->management_level = User::MANAGEMENT_LEVEL_LOW;
+                $user->save();
+                $count++;
+                continue;
+            }
+            
+            // Ensure all other customers have no management level (null)
+            if ($user->hasRole('Customer') && $user->management_level !== null) {
+                $user->management_level = null;
+                $user->save();
+                $count++;
+            }
         }
         
-        $this->command->info('Management levels assigned successfully!');
+        $this->command->info("Updated management levels for {$count} users");
     }
 }
