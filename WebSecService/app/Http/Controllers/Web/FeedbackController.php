@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class FeedbackController extends Controller
 {
@@ -22,6 +23,12 @@ class FeedbackController extends Controller
         // Check permissions - user needs view_customer_feedback permission
         if (!Auth::user()->hasPermissionTo('view_customer_feedback')) {
             abort(403, 'Unauthorized action. You need view_customer_feedback permission.');
+        }
+        
+        // Management level check - even low-level managers can view customer feedback
+        if (!Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_LOW) && 
+            !Auth::user()->hasPermissionTo('view_customer_feedback')) {
+            abort(403, 'Unauthorized action. You need appropriate management level or permissions.');
         }
         
         $feedbacks = Feedback::with(['user', 'order'])
@@ -41,6 +48,13 @@ class FeedbackController extends Controller
             abort(403, 'Unauthorized action. You need view_customer_feedback permission.');
         }
         
+        // Management level check - even low-level managers can view feedback details
+        if (Auth::id() != $feedback->user_id && 
+            !Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_LOW) && 
+            !Auth::user()->hasPermissionTo('view_customer_feedback')) {
+            abort(403, 'Unauthorized action. You need appropriate management level or permissions.');
+        }
+        
         return view('feedback.show', compact('feedback'));
     }
     
@@ -52,6 +66,12 @@ class FeedbackController extends Controller
         // Check permissions - user needs respond_to_feedback permission
         if (!Auth::user()->hasPermissionTo('respond_to_feedback')) {
             abort(403, 'Unauthorized action. You need respond_to_feedback permission.');
+        }
+        
+        // Management level check - only middle and high level managers can respond to feedback
+        if (!Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_MIDDLE) && 
+            !Auth::user()->hasPermissionTo('respond_to_feedback')) {
+            abort(403, 'Unauthorized action. You need middle or high management level.');
         }
         
         $request->validate([

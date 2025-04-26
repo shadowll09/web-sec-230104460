@@ -43,66 +43,83 @@ class UsersController extends Controller {
     }
 
     public function doRegister(Request $request) {
-        // Validate the registration data
         $request->validate([
-            'name' => ['required', 'string', 'min:5'],
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Create the user
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);
-        $user->credits = 1000; // Give new customers some starting credits
-        $user->save();
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'credits' => 0,
+            'management_level' => null, // Customers have no management level
+        ]);
 
-        // Assign the Customer role to new registrations
         $user->assignRole('Customer');
 
-        // Log the user in
         Auth::login($user);
 
-        return redirect('/')->with('success', 'Registration successful! Welcome to our store.');
+        return redirect()->route('home');
     }
 
     public function createEmployee(Request $request) {
-        // Check if the user has permission to manage employees
-        if(!auth()->user()->hasPermissionTo('manage_employees')) {
-            abort(403, 'You do not have permission to manage employees.');
+        // Check if user has permission to create employees
+        if (!Auth::user()->hasPermissionTo('create_employee')) {
+            abort(403, 'Unauthorized action. You need create_employee permission.');
         }
 
-        return view('users.create_employee');
+        // Check management level - only high-level managers can create employees
+        if (!Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_HIGH) && 
+            !Auth::user()->hasPermissionTo('assign_management_level')) {
+            abort(403, 'Unauthorized action. You need high management level.');
+        }
+
+        $roles = Role::where('name', '!=', 'Customer')->get();
+        
+        return view('users.create-employee', [
+            'roles' => $roles,
+            'managementLevels' => [
+                User::MANAGEMENT_LEVEL_LOW => 'Low (Customer tasks only)',
+                User::MANAGEMENT_LEVEL_MIDDLE => 'Middle (Customer & low-level tasks)',
+                User::MANAGEMENT_LEVEL_HIGH => 'High (Full system access)',
+            ]
+        ]);
     }
 
     public function saveEmployee(Request $request) {
-        // Check if the user has permission to manage employees
-        if(!auth()->user()->hasPermissionTo('manage_employees')) {
-            abort(403, 'You do not have permission to manage employees.');
+        // Check if user has permission to create employees
+        if (!Auth::user()->hasPermissionTo('create_employee')) {
+            abort(403, 'Unauthorized action. You need create_employee permission.');
         }
 
-        try {
-            $this->validate($request, [
-                'name' => ['required', 'string', 'min:5'],
-                'email' => ['required', 'email', 'unique:users'],
-                'password' => ['required', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
-            ]);
-        }
-        catch(\Exception $e) {
-            return redirect()->back()->withInput($request->input())->withErrors('Invalid employee information.');
+        // Check management level - only high-level managers can create employees
+        if (!Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_HIGH) && 
+            !Auth::user()->hasPermissionTo('assign_management_level')) {
+            abort(403, 'Unauthorized action. You need high management level.');
         }
 
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);
-        $user->save();
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|exists:roles,name',
+            'management_level' => 'nullable|string|in:low,middle,high',
+        ]);
 
-        // Assign the Employee role
-        $user->assignRole('Employee');
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'credits' => 0,
+            'management_level' => $request->management_level,
+        ]);
 
-        return redirect()->route('users')->with('success', 'Employee created successfully');
+        $user->assignRole($request->role);
+
+        return redirect()->route('users.list')
+            ->with('success', 'Employee created successfully.');
     }
 
     public function login(Request $request) {
@@ -528,5 +545,73 @@ class UsersController extends Controller {
             'success' => true,
             'message' => 'Theme preferences saved successfully',
         ]);
+    }
+
+    /**
+     * Update the specified user in storage.
+     */
+    public function update(Request $request, User $user)
+    {
+        // Check if user has permission to update users
+        if (!Auth::user()->hasPermissionTo('edit_user')) {
+            abort(403, 'Unauthorized action. You need edit_user permission.');
+        }
+
+        // Check management level for role and management level changes
+        if (($request->has('role') || $request->has('management_level')) && 
+            !Auth::user()->hasManagementLevel(User::MANAGEMENT_LEVEL_HIGH) && 
+            !Auth::user()->hasPermissionTo('assign_management_level')) {
+            abort(403, 'Unauthorized action. You need high management level.');
+        }
+
+        $rules = [
+            'name' => 'required|string|max:255',
+        ];
+
+        // Only validate email if it's changed
+        if ($request->email !== $user->email) {
+            $rules['email'] = 'required|string|email|max:255|unique:users';
+        }
+
+        // Password is optional for updates
+        if ($request->filled('password')) {
+            $rules['password'] = 'string|min:8|confirmed';
+        }
+
+        if (Auth::user()->hasPermissionTo('assign_management_level')) {
+            $rules['role'] = 'nullable|string|exists:roles,name';
+            $rules['management_level'] = 'nullable|string|in:low,middle,high';
+        }
+
+        $request->validate($rules);
+
+        // Update basic info
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Update role and management level if authorized
+        if (Auth::user()->hasPermissionTo('assign_management_level')) {
+            // If user is being set as Customer, remove management level
+            if ($request->filled('role') && $request->role === 'Customer') {
+                $user->management_level = null;
+            } else if ($request->filled('management_level')) {
+                $user->management_level = $request->management_level;
+            }
+
+            // Update role if provided
+            if ($request->filled('role')) {
+                // Remove existing roles and assign the new one
+                $user->syncRoles([$request->role]);
+            }
+        }
+
+        $user->save();
+
+        return redirect()->route('users.edit', $user->id)
+            ->with('success', 'User updated successfully.');
     }
 }
