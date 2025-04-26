@@ -3,7 +3,7 @@
 @section('content')
 <div class="container py-4">
     <!-- Feedback Analytics Dashboard for Admin/Employee -->
-    @if(Auth::user()->hasAnyRole(['Admin', 'Employee']))
+    @if(Auth::user()->hasPermissionTo('manage_orders'))
     <div class="card mb-4 shadow-sm animate__animated animate__fadeIn">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h3 class="mb-0"><i class="bi bi-graph-up me-2"></i>Feedback Analytics</h3>
@@ -120,7 +120,7 @@
                             <tr>
                                 <th>Order #</th>
                                 <th>Date</th>
-                                @if(Auth::user()->hasAnyRole(['Admin', 'Employee']))
+                                @if(Auth::user()->hasPermissionTo('manage_orders'))
                                     <th>Customer</th>
                                 @endif
                                 <th>Total</th>
@@ -133,7 +133,7 @@
                                 <tr>
                                     <td>{{ $order->id }}</td>
                                     <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                    @if(Auth::user()->hasAnyRole(['Admin', 'Employee']))
+                                    @if(Auth::user()->hasPermissionTo('manage_orders'))
                                         <td>{{ $order->user->name }}</td>
                                     @endif
                                     <td>${{ number_format($order->total_amount, 2) }}</td>

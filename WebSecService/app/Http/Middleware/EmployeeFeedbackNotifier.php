@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EmployeeFeedbackNotifier
 {
     /**
-     * Handle employee access to customer feedback and cancelled orders.
+     * Handle access to customer feedback and cancelled orders.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -22,9 +22,9 @@ class EmployeeFeedbackNotifier
             return redirect('login');
         }
 
-        // Only allow employees and admins
-        if (!Auth::user()->hasAnyRole(['Employee', 'Admin'])) {
-            abort(403, 'Access denied. Employee privileges required.');
+        // Check permissions instead of roles
+        if (!Auth::user()->hasPermissionTo('view_customer_feedback')) {
+            abort(403, 'Access denied. Required permission: view_customer_feedback');
         }
 
         // Load unread feedback and cancellation notifications

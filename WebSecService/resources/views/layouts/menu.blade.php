@@ -21,30 +21,33 @@
         </li>
         @auth
           <!-- Admin Links -->
-          @if(auth()->user()->hasRole('Admin'))
+          @if(auth()->user()->hasPermissionTo('access_admin_panel'))
             <li class="nav-item">
-              <a class="nav-link d-flex align-items-center" href="{{ route('create_employee') }}">
-                <i class="bi bi-person-plus me-1"></i> Add Employee
+              <a class="nav-link d-flex align-items-center" href="{{ route('users') }}">
+                <i class="fas fa-users"></i> Manage Users
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center" href="{{ route('roles.index') }}">
-                <i class="bi bi-shield-lock me-1"></i> Role Management
+                <i class="fas fa-user-tag"></i> Manage Roles
               </a>
             </li>
           @endif
 
           <!-- Employee Links -->
-          @if(auth()->user()->hasAnyRole(['Admin', 'Employee']))
-            <li class="nav-item">
-              <a class="nav-link d-flex align-items-center" href="{{ route('users.customers') }}">
-                <i class="bi bi-people me-1"></i> Customers
+          @if(auth()->user()->hasPermissionTo('view_customer_feedback'))
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="feedbackDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-comment-alt"></i> Feedback
               </a>
+              <ul class="dropdown-menu" aria-labelledby="feedbackDropdown">
+                <li><a class="dropdown-item" href="{{ route('feedback.index') }}">View All Feedback</a></li>
+              </ul>
             </li>
           @endif
 
           <!-- Customer Links -->
-          @if(auth()->user()->hasRole('Customer'))
+          @if(auth()->check())
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center position-relative" href="{{ route('cart') }}">
                 <i class="bi bi-cart me-1"></i> Cart
@@ -55,22 +58,12 @@
                 @endif
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="{{ route('orders.index') }}">
+                <i class="fas fa-box"></i> My Orders
+              </a>
+            </li>
           @endif
-
-          <!-- Orders Link (visible to all authenticated users) -->
-          <li class="nav-item">
-            <a class="nav-link d-flex align-items-center" href="{{ route('orders.index') }}">
-              <i class="bi bi-box me-1"></i> Orders
-            </a>
-          </li>
-
-          @can('show_users')
-          <li class="nav-item">
-            <a class="nav-link d-flex align-items-center" href="{{ route('users') }}">
-              <i class="bi bi-people-fill me-1"></i> Users
-            </a>
-          </li>
-          @endcan
         @endauth
       </ul>
       <ul class="navbar-nav ms-auto">

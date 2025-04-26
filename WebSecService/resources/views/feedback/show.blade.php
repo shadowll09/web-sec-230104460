@@ -68,7 +68,7 @@
         </div>
         
         <div class="col-lg-4">
-            @if(Auth::user()->hasAnyRole(['Admin', 'Employee']) && !$feedback->resolved)
+            @if(Auth::user()->hasPermissionTo('respond_to_feedback') && !$feedback->resolved)
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="bi bi-reply me-2"></i>Respond to Feedback</h4>
@@ -93,17 +93,19 @@
                 </div>
             @endif
             
-            <div class="d-grid mt-3">
-                @if(Auth::user()->hasAnyRole(['Admin', 'Employee']))
-                    <a href="{{ route('feedback.index') }}" class="btn btn-outline-primary">
-                        <i class="bi bi-arrow-left me-1"></i> Back to Feedback List
-                    </a>
-                @else
-                    <a href="{{ route('orders.index') }}" class="btn btn-outline-primary">
-                        <i class="bi bi-arrow-left me-1"></i> Back to Orders
-                    </a>
-                @endif
-            </div>
+            @if(Auth::user()->hasPermissionTo('view_customer_feedback'))
+                <div class="d-grid mt-3">
+                    @if(Auth::user()->hasAnyRole(['Admin', 'Employee']))
+                        <a href="{{ route('feedback.index') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Feedback List
+                        </a>
+                    @else
+                        <a href="{{ route('orders.index') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Orders
+                        </a>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 </div>

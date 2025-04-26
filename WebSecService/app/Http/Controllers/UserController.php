@@ -10,9 +10,9 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    // If using “public function createEmployee(Role $role)” 
+    // If using "public function createEmployee(Role $role)" 
     // make sure your route includes a {role} parameter 
-    // or remove the Role $role parameter if it’s not needed.
+    // or remove the Role $role parameter if it's not needed.
 
     /**
      * Display a listing of customers.
@@ -67,9 +67,9 @@ class UserController extends Controller
      */
     public function addCredits(Request $request, User $user)
     {
-        // Check if current user has role Admin or Employee
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action');
+        // Check if current user has necessary permission
+        if (!Auth::user()->hasPermissionTo('manage_orders')) {
+            abort(403, 'Unauthorized action. You need manage_orders permission.');
         }
 
         $request->validate([

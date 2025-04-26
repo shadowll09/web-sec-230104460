@@ -89,10 +89,10 @@ class OrdersController extends Controller
      */
     public function addToCart(Request $request, Product $product)
     {
-        // Check if user has the Customer role
+        // Check if user is authenticated and allowed to make purchases
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Customer')) {
-            abort(403, 'Only customers can add products to cart.');
+        if (!$user) {
+            abort(403, 'You must be logged in to add products to cart.');
         }
 
         // Check if product is in stock (even if stock_quantity is 1, it's still available)
@@ -465,11 +465,6 @@ class OrdersController extends Controller
             abort(403, 'Unauthorized action. You need manage_orders permission.');
         }
 
-        // Ensure target user is a customer
-        if (!$user->hasRole('Customer')) {
-            return redirect()->back()->with('error', 'Credits can only be added to customer accounts.');
-        }
-
         return view('users.add_credits', compact('user'));
     }
 
@@ -487,11 +482,6 @@ class OrdersController extends Controller
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0.01|max:10000|regex:/^\d+(\.\d{1,2})?$/'
         ]);
-
-        // Ensure target user is a customer
-        if (!$user->hasRole('Customer')) {
-            return redirect()->back()->with('error', 'Credits can only be added to customer accounts.');
-        }
 
         // Log the operation for audit purposes
         Log::info("User {$request->user()->id} ({$request->user()->email}) added {$validated['amount']} credits to user {$user->id} ({$user->email})");
@@ -524,7 +514,7 @@ class OrdersController extends Controller
         }
         
         // Additional check for customers - can only cancel their own orders
-        if (Auth::user()->hasRole('Customer') && Auth::id() != $order->user_id) {
+        if (Auth::id() != $order->user_id && !Auth::user()->hasPermissionTo('manage_orders')) {
             abort(403, 'You can only cancel your own orders.');
         }
 
@@ -549,7 +539,7 @@ class OrdersController extends Controller
         }
         
         // Additional check for customers - can only cancel their own orders
-        if (Auth::user()->hasRole('Customer') && Auth::id() != $order->user_id) {
+        if (Auth::id() != $order->user_id && !Auth::user()->hasPermissionTo('manage_orders')) {
             abort(403, 'You can only cancel your own orders.');
         }
 

@@ -579,7 +579,7 @@
 
         <!-- Notifications Area - Add this where appropriate in your layout -->
         @auth
-            @if(Auth::user()->hasAnyRole(['Admin', 'Employee']) && isset($feedbackNotifications) && $unreadFeedbackCount > 0)
+            @if(Auth::user()->hasPermissionTo('view_customer_feedback') && isset($feedbackNotifications) && $unreadFeedbackCount > 0)
             <div class="notification-panel">
                 <div class="dropdown">
                     <button class="btn btn-primary dropdown-toggle position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">

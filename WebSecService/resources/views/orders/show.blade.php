@@ -117,7 +117,7 @@
                                 {{ $feedback->resolved ? 'Resolved' : 'Pending' }}
                             </span>
                             
-                            @if(Auth::user()->hasAnyRole(['Admin', 'Employee']) && !$feedback->resolved)
+                            @if(Auth::user()->hasPermissionTo('respond_to_feedback') && !$feedback->resolved)
                             <a href="{{ route('feedback.show', $feedback->id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-reply"></i> Respond
                             </a>
@@ -156,7 +156,7 @@
 
                     <div class="d-grid gap-2">
                         <!-- Add cancel button for customers (if order is pending or processing) -->
-                        @if((Auth::id() == $order->user_id || Auth::user()->hasAnyRole(['Admin', 'Employee'])) && in_array($order->status, ['pending', 'processing']))
+                        @if((Auth::id() == $order->user_id || Auth::user()->hasPermissionTo('manage_orders')) && in_array($order->status, ['pending', 'processing']))
                             <a href="{{ route('orders.cancel.form', $order->id) }}" class="btn btn-danger">
                                 <i class="bi bi-x-circle me-1"></i> Cancel Order
                             </a>
