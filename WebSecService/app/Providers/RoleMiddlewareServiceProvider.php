@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\CheckPermission;
 
 class RoleMiddlewareServiceProvider extends ServiceProvider
 {
@@ -23,5 +24,6 @@ class RoleMiddlewareServiceProvider extends ServiceProvider
     {
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('role', CheckRole::class);
+        $router->aliasMiddleware('permission', CheckPermission::class);
     }
 }

@@ -35,8 +35,8 @@ class OrdersController extends Controller
 
         $user = Auth::user();
 
-        // If employee or admin, show all orders and feedback analytics
-        if ($user->hasAnyRole(['Admin', 'Employee'])) {
+        // If user has permissions to manage orders, show all orders and feedback analytics
+        if ($user->hasPermissionTo('manage_orders')) {
             $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
             
             // Feedback analytics data
@@ -75,7 +75,7 @@ class OrdersController extends Controller
     {
         // Check if user has permission to view this order
         $user = Auth::user();
-        if (!$user->hasAnyRole(['Admin', 'Employee']) && $order->user_id !== $user->id) {
+        if ($order->user_id !== $user->id && !$user->hasPermissionTo('view_orders')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -414,7 +414,7 @@ class OrdersController extends Controller
         $order = Order::with(['items.product', 'user'])->findOrFail($orderId);
 
         // Security check: only the order owner can see the confirmation
-        if (Auth::id() != $order->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
+        if (Auth::id() != $order->user_id && !Auth::user()->hasPermissionTo('view_orders')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -422,13 +422,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * Update order status (Admin/Employee only)
+     * Update order status (permission-based)
      */
     public function updateStatus(Request $request, Order $order)
     {
         // Check permissions
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        if (!Auth::user()->hasPermissionTo('manage_orders')) {
+            abort(403, 'Unauthorized action. You need manage_orders permission.');
         }
 
         $request->validate([
@@ -442,13 +442,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * List all customers (for employees)
+     * List all customers (permission-based)
      */
     public function listCustomers()
     {
         // Check if user has permission
         if (!Auth::user()->hasPermissionTo('list_customers')) {
-            abort(403, 'Unauthorized action.');
+            abort(403, 'Unauthorized action. You need list_customers permission.');
         }
 
         $customers = User::role('Customer')->get();
@@ -456,13 +456,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * Add credits to customer (for employees and admins)
+     * Add credits to customer (permission-based)
      */
     public function addCreditsForm(User $user)
     {
         // Check permissions
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        if (!Auth::user()->hasPermissionTo('manage_orders')) {
+            abort(403, 'Unauthorized action. You need manage_orders permission.');
         }
 
         // Ensure target user is a customer
@@ -479,8 +479,8 @@ class OrdersController extends Controller
     public function addCredits(Request $request, User $user)
     {
         // Check permissions
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        if (!Auth::user()->hasPermissionTo('manage_orders')) {
+            abort(403, 'Unauthorized action. You need manage_orders permission.');
         }
 
         // Enhanced validation
@@ -514,13 +514,18 @@ class OrdersController extends Controller
     }
 
     /**
-     * Show the order cancellation form - employee only
+     * Show the order cancellation form (permission-based)
      */
     public function showCancelForm(Order $order)
     {
-        // Check if user is authorized to cancel the order (Admin/Employee only)
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Only employees can cancel orders.');
+        // Check if user is authorized to cancel the order (needs cancel_order permission)
+        if (!Auth::user()->hasPermissionTo('cancel_order')) {
+            abort(403, 'Unauthorized action. You need cancel_order permission.');
+        }
+        
+        // Additional check for customers - can only cancel their own orders
+        if (Auth::user()->hasRole('Customer') && Auth::id() != $order->user_id) {
+            abort(403, 'You can only cancel your own orders.');
         }
 
         // Only allow cancellation for pending or processing orders
@@ -534,13 +539,18 @@ class OrdersController extends Controller
     }
 
     /**
-     * Process order cancellation - employee only
+     * Process order cancellation (permission-based)
      */
     public function cancelOrder(Request $request, Order $order)
     {
-        // Check if user is authorized to cancel the order (Admin/Employee only)
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Only employees can cancel orders.');
+        // Check if user is authorized to cancel the order (needs cancel_order permission)
+        if (!Auth::user()->hasPermissionTo('cancel_order')) {
+            abort(403, 'Unauthorized action. You need cancel_order permission.');
+        }
+        
+        // Additional check for customers - can only cancel their own orders
+        if (Auth::user()->hasRole('Customer') && Auth::id() != $order->user_id) {
+            abort(403, 'You can only cancel your own orders.');
         }
 
         // Only allow cancellation for pending or processing orders
@@ -566,7 +576,7 @@ class OrdersController extends Controller
                     $product->updateStock(-$item->quantity);
                     
                     // Log stock restore
-                    Log::info("Employee {" . Auth::user()->name . "} restored {$item->quantity} items to stock for product {$item->product_id} from cancelled order {$order->id}");
+                    Log::info("User {" . Auth::user()->name . "} restored {$item->quantity} items to stock for product {$item->product_id} from cancelled order {$order->id}");
                 }
             }
             
@@ -576,7 +586,7 @@ class OrdersController extends Controller
                 $user->addCredits($order->total_amount);
                 
                 // Log credit refund
-                Log::info("Employee {" . Auth::user()->name . "} refunded {$order->total_amount} credits to user {$user->id} for cancelled order {$order->id}");
+                Log::info("User {" . Auth::user()->name . "} refunded {$order->total_amount} credits to user {$user->id} for cancelled order {$order->id}");
             }
             
             // Update order status to cancelled
