@@ -85,6 +85,45 @@
             --scrollbar-track: #2a2e33;
         }
         
+        /* Dark mode specific overrides for better visibility */
+        [data-theme="dark"] .btn-outline-primary {
+            color: var(--theme-primary);
+            border-color: var(--theme-primary);
+        }
+        
+        [data-theme="dark"] .btn-outline-primary:hover {
+            background-color: var(--theme-primary);
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .btn-light {
+            background-color: #f8f9fa;
+            color: #212529 !important;
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: #c2c7d0 !important;
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .table {
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .form-control {
+            background-color: #2c3237;
+            color: #f8f9fa;
+            border-color: #495057;
+        }
+        
+        [data-theme="dark"] .form-control:focus {
+            background-color: #33383d;
+            color: #f8f9fa;
+        }
+        
         /* Energy Theme (Red) */
         [data-color-theme="energy"] {
             --theme-primary: #e63946;
@@ -129,6 +168,7 @@
             background-color: var(--card-bg);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+            color: var(--text-color);
         }
 
         .card:hover {
@@ -138,6 +178,19 @@
         
         .card-header.bg-primary {
             background-color: var(--theme-primary) !important;
+        }
+        
+        /* Ensure all text in card headers with bg-primary is white */
+        .card-header.bg-primary, 
+        .card-header.bg-primary h1, 
+        .card-header.bg-primary h2, 
+        .card-header.bg-primary h3, 
+        .card-header.bg-primary h4, 
+        .card-header.bg-primary h5, 
+        .card-header.bg-primary h6, 
+        .card-header.bg-primary p,
+        .card-header.bg-primary span {
+            color: white !important;
         }
 
         /* Buttons */
@@ -258,6 +311,31 @@
             color: white !important; /* Ensure text is visible */
             border-left: 4px solid var(--theme-accent);
         }
+        
+        .alert-success, .alert-danger, .alert-warning, .alert-info, .alert-primary {
+            color: white !important;
+        }
+
+        .alert-success {
+            background-color: var(--success-color) !important;
+        }
+        
+        .alert-danger {
+            background-color: var(--danger-color) !important;
+        }
+        
+        .alert-warning {
+            background-color: var(--warning-color) !important;
+            color: #212529 !important;
+        }
+        
+        .alert-info {
+            background-color: var(--info-color) !important;
+        }
+        
+        .alert-primary {
+            background-color: var(--theme-primary) !important;
+        }
 
         /* Animation utility classes */
         .scale-in {
@@ -287,15 +365,46 @@
         
         .badge-themed {
             background-color: var(--theme-primary) !important;
-            color: white;
+            color: white !important;
         }
         
         .bg-primary {
             background-color: var(--theme-primary) !important;
+            color: white !important;
+        }
+        
+        .bg-success {
+            background-color: var(--success-color) !important;
+            color: white !important;
+        }
+        
+        .bg-danger {
+            background-color: var(--danger-color) !important;
+            color: white !important;
+        }
+        
+        .bg-warning {
+            background-color: var(--warning-color) !important;
+            color: #212529 !important;
+        }
+        
+        .bg-info {
+            background-color: var(--info-color) !important;
+            color: white !important;
         }
         
         .text-primary {
             color: var(--theme-primary) !important;
+        }
+
+        /* White text on colored backgrounds */
+        .text-white {
+            color: white !important;
+        }
+        
+        /* Dark text for light backgrounds */
+        .text-dark {
+            color: #212529 !important;
         }
 
         /* Notification panel styles */
