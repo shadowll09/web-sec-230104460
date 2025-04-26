@@ -102,17 +102,55 @@ body {
   color: #166534;
 }
 
-/* Dark Mode Support */
+/* Dark Mode Support - Apply regardless of system preference */
+body.dark-mode-enabled {
+  background-color: var(--dark-color);
+  color: #ffffff !important; /* Force white text throughout the site */
+}
+
+body.dark-mode-enabled p,
+body.dark-mode-enabled h1,
+body.dark-mode-enabled h2,
+body.dark-mode-enabled h3,
+body.dark-mode-enabled h4,
+body.dark-mode-enabled h5,
+body.dark-mode-enabled h6,
+body.dark-mode-enabled label,
+body.dark-mode-enabled span,
+body.dark-mode-enabled a:not(.btn),
+body.dark-mode-enabled input,
+body.dark-mode-enabled textarea,
+body.dark-mode-enabled select,
+body.dark-mode-enabled th,
+body.dark-mode-enabled td,
+body.dark-mode-enabled li {
+  color: #ffffff !important; /* Ensure all text elements are white */
+}
+
+body.dark-mode-enabled .card,
+body.dark-mode-enabled .modal-content,
+body.dark-mode-enabled .dropdown-menu {
+  background-color: #2a2e33;
+}
+
+body.dark-mode-enabled .border {
+  border-color: #495057 !important;
+}
+
+/* Form controls in dark mode */
+body.dark-mode-enabled .form-control {
+  background-color: #343a40;
+  color: #ffffff;
+  border-color: #495057;
+}
+
+body.dark-mode-enabled .form-control:focus {
+  background-color: #3a4047;
+}
+
+/* Keep any media query specific overrides if needed */
 @media (prefers-color-scheme: dark) {
-  body.dark-mode-enabled {
-    background-color: var(--dark-color);
-    color: #f8fafc;
-  }
-  
-  body.dark-mode-enabled .card {
-    background-color: #3a3a3a;
-    color: #f0f0f0;
-  }
+  /* Additional dark mode specific styles that should only apply when system preference is dark */
 }
 
 /* Accessibility Improvements */
