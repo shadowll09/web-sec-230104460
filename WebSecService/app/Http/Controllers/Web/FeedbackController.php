@@ -19,9 +19,9 @@ class FeedbackController extends Controller
      */
     public function index()
     {
-        // Check permissions - only admin and employees can view all feedback
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        // Check permissions - user needs view_customer_feedback permission
+        if (!Auth::user()->hasPermissionTo('view_customer_feedback')) {
+            abort(403, 'Unauthorized action. You need view_customer_feedback permission.');
         }
         
         $feedbacks = Feedback::with(['user', 'order'])
@@ -36,9 +36,9 @@ class FeedbackController extends Controller
      */
     public function show(Feedback $feedback)
     {
-        // Check permissions
-        if (Auth::id() != $feedback->user_id && !Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        // Check permissions - user needs to be the feedback owner or have view_customer_feedback permission
+        if (Auth::id() != $feedback->user_id && !Auth::user()->hasPermissionTo('view_customer_feedback')) {
+            abort(403, 'Unauthorized action. You need view_customer_feedback permission.');
         }
         
         return view('feedback.show', compact('feedback'));
@@ -49,9 +49,9 @@ class FeedbackController extends Controller
      */
     public function respond(Request $request, Feedback $feedback)
     {
-        // Check permissions
-        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
-            abort(403, 'Unauthorized action.');
+        // Check permissions - user needs respond_to_feedback permission
+        if (!Auth::user()->hasPermissionTo('respond_to_feedback')) {
+            abort(403, 'Unauthorized action. You need respond_to_feedback permission.');
         }
         
         $request->validate([

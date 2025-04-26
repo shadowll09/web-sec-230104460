@@ -43,7 +43,7 @@ Route::post('users/save_password/{user}', [UsersController::class, 'savePassword
 Route::get('products', [ProductsController::class, 'list'])->name('products_list');
 Route::get('products/{product}', [ProductsController::class, 'show'])->name('products.show');
 Route::middleware(['auth'])->group(function () {
-    Route::middleware(['role:Admin|Employee'])->group(function () {
+    Route::middleware(['permission:add_products,edit_products,delete_products'])->group(function () {
         Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
         Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
         Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
@@ -65,17 +65,26 @@ Route::middleware(['auth'])->group(function () {
     Route::post('place-order', [OrdersController::class, 'placeOrder'])->name('orders.place');
 });
 
-// Admin/Employee routes
+// Routes requiring specific permissions
 Route::middleware(['auth'])->group(function () {
-    Route::middleware(['role:Admin|Employee'])->group(function () {
+    // Order management routes
+    Route::middleware(['permission:manage_orders'])->group(function () {
         Route::patch('orders/{order}/status', [OrdersController::class, 'updateStatus'])->name('orders.update.status');
         Route::get('customers/{user}/add-credits', [OrdersController::class, 'addCreditsForm'])->name('add_credits_form');
         Route::post('customers/{user}/add-credits', [OrdersController::class, 'addCredits'])->name('add_credits');
-
-        // Customer management
+    });
+    
+    // Customer management routes
+    Route::middleware(['permission:list_customers'])->group(function () {
         Route::get('customers', [UserController::class, 'customers'])->name('users.customers');
         Route::get('customers/{user}/credits', [UserController::class, 'showAddCredits'])->name('users.credits.show');
         Route::post('customers/{user}/credits', [UserController::class, 'addCredits'])->name('users.credits.add');
+    });
+    
+    // Order cancellation routes - now available to anyone with cancel_order permission
+    Route::middleware(['permission:cancel_order'])->group(function () {
+        Route::get('/orders/{order}/cancel', [OrdersController::class, 'showCancelForm'])->name('orders.cancel.form');
+        Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])->name('orders.cancel');
     });
 });
 
@@ -84,7 +93,7 @@ Route::get('user/profile/{user?}', [UserController::class, 'profile'])->name('us
 
 // Admin routes
 Route::middleware(['auth'])->group(function () {
-    Route::middleware(['role:Admin'])->group(function () {
+    Route::middleware(['permission:manage_employees'])->group(function () {
         Route::get('employees/create', [UsersController::class, 'createEmployee'])->name('create_employee');
         Route::post('employees/store', [UsersController::class, 'storeEmployee'])->name('store_employee');
     });
@@ -92,7 +101,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Role management routes
 Route::middleware(['auth'])->group(function () {
-    Route::middleware(['role:Admin'])->group(function () {
+    Route::middleware(['permission:manage_roles'])->group(function () {
         Route::get('/roles', [RolesController::class, 'index'])->name('roles.index');
         Route::get('/roles/create', [RolesController::class, 'create'])->name('roles.create');
         Route::post('/roles', [RolesController::class, 'store'])->name('roles.store');
@@ -144,12 +153,8 @@ Route::get('/calculator', function () {
     return view('calculator');
 });
 
-// Order Cancellation Routes
-Route::get('/orders/{order}/cancel', [OrdersController::class, 'showCancelForm'])->name('orders.cancel.form');
-Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancelOrder'])->name('orders.cancel');
-
 // Feedback Routes
-Route::middleware(['auth', 'employee.feedback'])->group(function () {
+Route::middleware(['auth', 'permission:view_customer_feedback,respond_to_feedback'])->group(function () {
     Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
     Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
     Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
