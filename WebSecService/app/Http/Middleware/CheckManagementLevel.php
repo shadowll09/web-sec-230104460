@@ -12,6 +12,7 @@ class CheckManagementLevel
 {
     /**
      * Handle an incoming request based on management level.
+     * Users with specific permissions can bypass management level requirements.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -23,6 +24,11 @@ class CheckManagementLevel
         }
 
         $user = Auth::user();
+        
+        // Allow users with the assign_management_level permission to bypass management level checks
+        if ($user->hasPermissionTo('assign_management_level')) {
+            return $next($request);
+        }
 
         switch ($level) {
             case 'high':

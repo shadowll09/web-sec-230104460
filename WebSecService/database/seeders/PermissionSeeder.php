@@ -21,6 +21,12 @@ class PermissionSeeder extends Seeder
             'manage_permissions',
             'view_logs',
             'access_admin_panel',
+            'admin_users',
+            'show_users',
+            'edit_users',
+            'delete_users',
+            'create_employee',
+            'assign_management_level',
 
             // Employee permissions
             'view_products',
@@ -30,6 +36,7 @@ class PermissionSeeder extends Seeder
 
             // Feedback permissions
             'view_customer_feedback',
+            'view_feedback',
             'respond_to_feedback',
             'view_order_cancellations',
             'receive_cancellation_notifications',
@@ -48,15 +55,22 @@ class PermissionSeeder extends Seeder
         $employeeRole = Role::findByName('Employee');
         $customerRole = Role::findByName('Customer');
         
-        // Add existing permissions to Admin role
+        // Add permissions to Admin role
         $adminRole->givePermissionTo([
             'manage_users',
             'manage_roles',
             'manage_permissions',
             'view_logs',
             'access_admin_panel',
+            'admin_users',
+            'show_users',
+            'edit_users',
+            'delete_users',
+            'create_employee',
+            'assign_management_level',
 
             'view_customer_feedback',
+            'view_feedback',
             'respond_to_feedback',
             'view_order_cancellations',
             'receive_cancellation_notifications',
@@ -64,7 +78,7 @@ class PermissionSeeder extends Seeder
             'cancel_order',
         ]);
         
-        // Add existing permissions to Employee role
+        // Add permissions to Employee role
         $employeeRole->givePermissionTo([
             'view_products',
             'manage_orders',
@@ -72,13 +86,14 @@ class PermissionSeeder extends Seeder
             'manage_feedback',
 
             'view_customer_feedback',
+            'view_feedback',
             'respond_to_feedback',
             'view_order_cancellations',
             'receive_cancellation_notifications',
             'cancel_order',
         ]);
         
-        // Add cancel_order permission to Customer role
+        // Add permissions to Customer role
         $customerRole->givePermissionTo([
             'cancel_order',
         ]);
