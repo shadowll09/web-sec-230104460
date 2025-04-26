@@ -36,7 +36,8 @@ return new class extends Migration
             // Order management
             'place_order',
             'view_orders',
-            'manage_orders'
+            'manage_orders',
+            'cancel_order'
         ];
 
         foreach ($permissions as $permission) {
@@ -57,14 +58,16 @@ return new class extends Migration
             'delete_products',
             'list_customers',
             'view_orders',
-            'manage_orders'
+            'manage_orders',
+            'cancel_order'
         ]);
 
         // Customer role
         $customerRole = Role::create(['name' => 'Customer']);
         $customerRole->givePermissionTo([
             'list_products',
-            'place_order'
+            'place_order',
+            'cancel_order'
         ]);
     }
 

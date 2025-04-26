@@ -54,6 +54,9 @@ class DatabaseSeeder extends Seeder
         );
         $customer2->assignRole('Customer');
 
+        // Run permission seeder to ensure all permissions are properly assigned
+        $this->call(PermissionSeeder::class);
+        
         // Seed products
         $this->call(ProductSeeder::class);
     }

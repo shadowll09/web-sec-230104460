@@ -34,6 +34,9 @@ class PermissionSeeder extends Seeder
             'view_order_cancellations',
             'receive_cancellation_notifications',
             'manage_notifications',
+            
+            // Order cancellation permission
+            'cancel_order',
         ];
 
         foreach ($permissions as $permission) {
@@ -43,6 +46,7 @@ class PermissionSeeder extends Seeder
         // Assign permissions to roles
         $adminRole = Role::findByName('Admin');
         $employeeRole = Role::findByName('Employee');
+        $customerRole = Role::findByName('Customer');
         
         // Add existing permissions to Admin role
         $adminRole->givePermissionTo([
@@ -57,6 +61,7 @@ class PermissionSeeder extends Seeder
             'view_order_cancellations',
             'receive_cancellation_notifications',
             'manage_notifications',
+            'cancel_order',
         ]);
         
         // Add existing permissions to Employee role
@@ -70,6 +75,12 @@ class PermissionSeeder extends Seeder
             'respond_to_feedback',
             'view_order_cancellations',
             'receive_cancellation_notifications',
+            'cancel_order',
+        ]);
+        
+        // Add cancel_order permission to Customer role
+        $customerRole->givePermissionTo([
+            'cancel_order',
         ]);
     }
 }
