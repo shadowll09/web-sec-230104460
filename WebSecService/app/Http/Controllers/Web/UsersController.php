@@ -499,4 +499,34 @@ class UsersController extends Controller {
             return redirect()->back()->with('error', 'Failed to fix permissions: ' . $e->getMessage());
         }
     }
+    
+    /**
+     * Save theme preferences for the user
+     */
+    public function saveThemePreferences(Request $request)
+    {
+        // Make sure the user is logged in
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Validate the request
+        $request->validate([
+            'theme_dark_mode' => 'required|boolean',
+            'theme_color' => 'required|string|in:default,energy,calm,ocean',
+        ]);
+        
+        // Get the current user
+        $user = Auth::user();
+        
+        // Update the theme preferences
+        $user->theme_dark_mode = $request->theme_dark_mode;
+        $user->theme_color = $request->theme_color;
+        $user->save();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Theme preferences saved successfully',
+        ]);
+    }
 }
