@@ -46,6 +46,15 @@ return [
             'threshold_percentage' => env('CANCELLATION_THRESHOLD', 5), // Alert if cancellation rate exceeds 5%
         ],
     ],
+    
+    'permission_descriptions' => [
+        'manage_users' => 'Allows creating, editing, and deleting user accounts',
+        'manage_roles' => 'Allows creating, editing, and deleting roles in the system',
+        'manage_permissions' => 'Allows assigning and revoking permissions to roles and users',
+        'manage_orders' => 'Allows viewing and updating the status of customer orders',
+        'cancel_order' => 'Allows cancellation of orders and processing refunds',
+        // Add more permission descriptions as needed
+    ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
