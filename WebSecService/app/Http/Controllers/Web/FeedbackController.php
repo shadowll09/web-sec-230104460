@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Http\Controllers\Web;
-
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class FeedbackController extends Controller
 {
@@ -14,17 +13,22 @@ class FeedbackController extends Controller
      */
     public function index(Request $request)
     {
-        // Change from role check to permission check
-        if (!auth()->user()->hasPermissionTo('view_feedback')) {
+        // Check permission
+        if (!auth()->user()->hasPermissionTo('view_customer_feedback') && 
+            !auth()->user()->hasPermissionTo('respond_to_feedback')) {
             abort(403, 'You do not have permission to view feedback.');
         }
-
-        // Get all feedback ordered by creation date
-        $feedback = Feedback::orderBy('created_at', 'desc')->get();
         
-        return view('feedback.index', compact('feedback'));
+        // Get all feedback ordered by creation date WITH PAGINATION
+        $feedbacks = Feedback::orderBy('created_at', 'desc')->paginate(10);
+        
+        // Format feedback count with plural
+        $feedbackCount = $feedbacks->total();
+        $feedbackLabel = $feedbackCount . ' ' . Str::plural('feedback', $feedbackCount);
+        
+        return view('feedback.index', compact('feedbacks', 'feedbackLabel'));
     }
-
+    
     /**
      * Show the form for submitting feedback
      */
@@ -76,21 +80,20 @@ class FeedbackController extends Controller
         if (!auth()->user()->hasPermissionTo('respond_to_feedback')) {
             abort(403, 'You do not have permission to respond to feedback');
         }
-
+        
         $request->validate([
-            'response' => 'required|string|max:1000',
+            'admin_response' => 'required|string|max:1000',
         ]);
         
-        // Create response and update status
-        $feedback->responses()->create([
-            'user_id' => auth()->id(),
-            'message' => $request->response,
+        // Update the feedback with the response
+        $feedback->update([
+            'admin_response' => $request->admin_response,
+            'resolved' => true,
+            'resolved_by' => auth()->id(),
+            'resolved_at' => now()
         ]);
         
-        $feedback->status = 'responded';
-        $feedback->save();
-        
-        return redirect()->route('feedback.show', $feedback)
-            ->with('success', 'Response added successfully');
+        return redirect()->route('feedback.show', $feedback->id)
+            ->with('success', 'Your response has been submitted successfully.');
     }
 }

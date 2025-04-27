@@ -29,10 +29,6 @@ class ProductsController extends Controller {
 			});
 		}
 		
-		if ($request->filled('category')) {
-			$query->where('category', $request->category);
-		}
-		
 		if ($request->filled('min_price')) {
 			$query->where('price', '>=', $request->min_price);
 		}
@@ -63,10 +59,7 @@ class ProductsController extends Controller {
 		
 		$products = $query->paginate(12)->withQueryString();
 		
-		// Get unique categories for the filter dropdown
-		$categories = Product::distinct()->pluck('category')->filter()->sort();
-		
-		return view('products.list', compact('products', 'categories'));
+		return view('products.list', compact('products'));
 	}
 
 	public function edit(Request $request, Product $product = null) {

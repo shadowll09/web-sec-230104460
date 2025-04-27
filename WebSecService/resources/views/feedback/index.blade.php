@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Str; @endphp
 @extends('layouts.master')
 @section('title', 'Feedback Management')
 @section('content')
@@ -5,7 +6,7 @@
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h3 class="mb-0"><i class="bi bi-chat-quote me-2"></i>Customer Feedback</h3>
-            <span class="badge bg-light text-primary">{{ $feedbacks->total() }} {{ Str::plural('feedback', $feedbacks->total()) }}</span>
+            <span class="badge bg-light text-primary">{{ $feedbacks->total() ?? 0 }} {{ Str::plural('feedback', $feedbacks->total() ?? 0) }}</span>
         </div>
         <div class="card-body">
             @if(session('success'))

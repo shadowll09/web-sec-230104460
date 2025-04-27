@@ -157,7 +157,7 @@ Route::get('/calculator', function () {
 });
 
 // Feedback Routes
-Route::middleware(['auth', 'permission:view_customer_feedback,respond_to_feedback'])->group(function () {
+Route::middleware(['auth', 'permission:view_customer_feedback|respond_to_feedback'])->group(function () {
     Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
     Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
     Route::post('/feedback/{feedback}/respond', [FeedbackController::class, 'respond'])->name('feedback.respond');
